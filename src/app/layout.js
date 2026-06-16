@@ -7,12 +7,23 @@ const anokhaFont = localFont({
   display: 'swap',
 });
 
+// Elite SEO Metadata Configuration with complete device icon mapping
 export const metadata = {
-  title: 'EnMate Digital Marketing Agency | Premium Web & Growth Solutions',
-  description: 'EnMate Digital Marketing Agency specializes in high-performance website development, branding identity systems, SEO visibility, and dynamic marketing models to scale your business online.',
+  title: 'EnMate Digital Marketing Agency | Based in Kottakkal, Serving Worldwide',
+  description: 'EnMate is a premium digital marketing agency based in Kottakkal, Kerala, India, serving clients locally & worldwide. We specialize in custom web architecture, visual branding identity layouts, and global customer acquisition funnels.',
   alternates: {
     canonical: 'https://enmate.in',
   },
+  icons: {
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({ children }) {
@@ -32,16 +43,21 @@ export default function RootLayout({ children }) {
               "name": "EnMate Digital Marketing Agency",
               "url": "https://enmate.in",
               "logo": "https://enmate.in/logos/site-logo.png",
-              "sameAs": [
-                "https://instagram.com/yourpage",
-                "https://linkedin.com/company/yourpage",
-                "https://x.com/yourpage"
-              ],
-              "contactPoint": {
-                "@type": "ContactPoint",
-                "telephone": "yournumber",
-                "contactType": "customer service"
-              }
+              "email": "contact@enmate.in",
+              "telephone": "+917510514464",
+              "description": "Based in Kottakkal, Kerala, India, serving clients locally & worldwide with premium web engineering and conversion-driven performance marketing strategies.",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Kottakkal",
+                "addressRegion": "Kerala",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                { "@type": "AdministrativeArea", "name": "Kottakkal" },
+                { "@type": "AdministrativeArea", "name": "Kerala" },
+                { "@type": "AdministrativeArea", "name": "India" },
+                { "@type": "Country", "name": "Worldwide" }
+              ]
             })
           }}
         />
