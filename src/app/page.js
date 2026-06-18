@@ -8,6 +8,14 @@ export default function HomePage() {
 
   const toggleMenu = () => setIsMenuOpen(prevState => !prevState);
 
+  // 🛠️ PATH A INTEGRATION: IMMEDIATE INVITATION HASH INTERCEPTOR
+  useEffect(() => {
+    if (window.location.hash && (window.location.hash.includes('type=invite') || window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token='))) {
+      // Direct javascript relocation preserves the exact raw hash parameters for your confirm route handler
+      window.location.href = `/auth/confirm${window.location.hash}`;
+    }
+  }, []);
+
   // 1. DYNAMIC MOUSE-TRACKING ACCENT GLOW CONTROLLER
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -210,7 +218,7 @@ export default function HomePage() {
               </div>
             </section>
 
-            {/* ─── FULLY RESTORED: ADVANCED PROCESS BLOCK SECTION ─── */}
+            {/* ─── ADVANCED PROCESS BLOCK SECTION ─── */}
             <section id="process" className="process-advanced">
               <div className="container">
                 <div className="process-wrapper reveal-on-scroll">
