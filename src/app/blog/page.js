@@ -48,14 +48,6 @@ export default function BlogListingPage() {
       });
     };
 
-    useEffect(() => {
-    // Catch the default Supabase invitation token from the URL hash
-    if (window.location.hash && window.location.hash.includes('type=invite')) {
-      const router = require('next/navigation').useRouter;
-      // Redirect them directly to your password creation screen with their token intact
-      window.location.href = `/auth/confirm${window.location.hash}`;
-    }
-  }, []);
     const dot = document.getElementById('cursor-dot');
     const ring = document.getElementById('cursor-ring');
     if (!dot || !ring) return;
