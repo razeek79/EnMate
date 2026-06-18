@@ -8,6 +8,7 @@ export default function HomePage() {
 
   const toggleMenu = () => setIsMenuOpen(prevState => !prevState);
 
+  // 1. DYNAMIC MOUSE-TRACKING ACCENT GLOW CONTROLLER
   useEffect(() => {
     const handleMouseMove = (e) => {
       const cards = document.querySelectorAll('.service-card');
@@ -62,14 +63,22 @@ export default function HomePage() {
     };
   }, []);
 
+  // 2. PREMIUM SCROLL REVEAL INTERSECTION CONTROLLER
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) entry.target.classList.add('is-visible');
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
       });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    }, { 
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    });
 
-    document.querySelectorAll('.reveal-on-scroll').forEach(target => observer.observe(target));
+    const targets = document.querySelectorAll('.reveal-on-scroll');
+    targets.forEach(target => observer.observe(target));
+
     return () => observer.disconnect();
   }, []);
 
@@ -77,12 +86,14 @@ export default function HomePage() {
 
   return (
     <>
+      {/* Dynamic Cursor Nodes */}
       <div id="cursor-dot" className="custom-cursor-dot" />
       <div id="cursor-ring" className="custom-cursor-ring" />
 
       <div className="min-h-screen w-full bg-cover bg-fixed bg-center bg-no-repeat bg-[url('/images/bg-images/home-mobile-bg.webp')] md:bg-[url('/images/bg-images/home-lap-bg.webp')]">
         <div className="min-h-screen w-full bg-gradient-to-b from-[#05030a]/45 via-[#05030a]/30 to-[#0b0410]/45">
 
+          {/* Fixed Header Navbar Layout */}
           <header className="main-header" ref={menuRef}>
             <div className="container nav-flex">
               <a href="#" className="logo-container">
@@ -95,9 +106,17 @@ export default function HomePage() {
                   <li><a href="#home" onClick={() => setIsMenuOpen(false)}>Home</a></li>
                   <li><a href="#services" onClick={() => setIsMenuOpen(false)}>Services</a></li>
                   <li><a href="/about">About Us</a></li>
-                  <li><a href="/blog" className="text-[var(--accent-soft)]">Blog</a></li> {/* Updated Route link map */}
+                  <li><a href="/blog" onClick={() => setIsMenuOpen(false)}>Blog</a></li>
                   <li className="nav-cta-mobile flex justify-center mt-4">
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary text-center text-xs font-bold tracking-wider" style={{ paddingLeft: '45px', paddingRight: '45px', paddingTop: '12px', paddingBottom: '12px' }}>Connect Us</a>
+                    <a 
+                      href={whatsappUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="btn btn-primary text-center text-xs font-bold tracking-wider"
+                      style={{ paddingLeft: '45px', paddingRight: '45px', paddingTop: '12px', paddingBottom: '12px' }}
+                    >
+                      Connect Us
+                    </a>
                   </li>
                 </ul>
               </nav>
@@ -112,6 +131,7 @@ export default function HomePage() {
           </header>
 
           <main>
+            {/* Hero Section */}
             <section id="home" className="hero">
               <div className="container">
                 <div className="max-w-[850px] reveal-on-scroll">
@@ -132,32 +152,161 @@ export default function HomePage() {
               </div>
             </section>
 
+            {/* Services Matrix Section */}
             <section id="services" className="services-section">
               <div className="container">
                 <div className="text-center mb-16 reveal-on-scroll">
                   <span className="section-tag">Our Services</span>
                   <h2 className="section-title">Digital Solutions Built to Grow Modern Businesses</h2>
+                  <p className="text-[var(--text-muted)] max-w-[750px] mx-auto text-sm md:text-base leading-relaxed">
+                    From custom website development and branding identity layouts to performance marketing, business automation systems, and video production, EnMate delivers end-to-end solutions that help brands build credibility and scale with confidence.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                  <div className="service-card reveal-on-scroll stagger-1"><div className="card-content"><div className="icon"><i className="fas fa-laptop-code"></i></div><h3>Website Development</h3><p>Custom business websites, landing pages, and web applications designed for performance, credibility, lead generation, and long-term scalability.</p></div></div>
-                  <div className="service-card reveal-on-scroll stagger-2"><div className="card-content"><div className="icon"><i className="fas fa-palette"></i></div><h3>Branding & Graphic Design</h3><p>Professional branding, visual identity systems, marketing materials, and creative designs that establish a premium brand presence.</p></div></div>
-                  <div className="service-card reveal-on-scroll stagger-3"><div className="card-content"><div className="icon"><i className="fas fa-chart-line"></i></div><h3>Digital Marketing & Growth</h3><p>Social media management, content strategy, growth planning, and data-driven ad campaigns focused on customer acquisition and revenue expansion.</p></div></div>
-                  <div className="service-card reveal-on-scroll stagger-1"><div className="card-content"><div className="icon"><i className="fas fa-video"></i></div><h3>Video & Creative Production</h3><p>Cinematic promotional ads, social media reels, and high-impact motion graphics designed to engage modern audiences.</p></div></div>
-                  <div className="service-card reveal-on-scroll stagger-2"><div className="card-content"><div className="icon"><i className="fas fa-diagram-project"></i></div><h3>Business Systems & Portals</h3><p>Custom employee management portals, internal workflow structures, and automated frameworks built to optimize business operations.</p></div></div>
-                  <div className="service-card reveal-on-scroll stagger-3"><div className="card-content"><div className="icon"><i className="fas fa-globe"></i></div><h3>Business Presence & Support</h3><p>Google Business Profile optimization, continuous SEO enhancements, and dedicated technical support to keep your digital infrastructure ahead of competitors.</p></div></div>
+                  <div className="service-card reveal-on-scroll stagger-1">
+                    <div className="card-content">
+                      <div className="icon"><i className="fas fa-laptop-code"></i></div>
+                      <h3>Website Development</h3>
+                      <p>Custom business websites, landing pages, and web applications designed for performance, credibility, lead generation, and long-term scalability.</p>
+                    </div>
+                  </div>
+                  <div className="service-card reveal-on-scroll stagger-2">
+                    <div className="card-content">
+                      <div className="icon"><i className="fas fa-palette"></i></div>
+                      <h3>Branding & Graphic Design</h3>
+                      <p>Professional branding, visual identity systems, marketing materials, and creative designs that establish a premium brand presence.</p>
+                    </div>
+                  </div>
+                  <div className="service-card reveal-on-scroll stagger-3">
+                    <div className="card-content">
+                      <div className="icon"><i className="fas fa-chart-line"></i></div>
+                      <h3>Digital Marketing & Growth</h3>
+                      <p>Social media management, content strategy, growth planning, and data-driven ad campaigns focused on customer acquisition and revenue expansion.</p>
+                    </div>
+                  </div>
+                  <div className="service-card reveal-on-scroll stagger-1">
+                    <div className="card-content">
+                      <div className="icon"><i className="fas fa-video"></i></div>
+                      <h3>Video & Creative Production</h3>
+                      <p>Cinematic promotional ads, social media reels, and high-impact motion graphics designed to engage modern audiences.</p>
+                    </div>
+                  </div>
+                  <div className="service-card reveal-on-scroll stagger-2">
+                    <div className="card-content">
+                      <div className="icon"><i className="fas fa-diagram-project"></i></div>
+                      <h3>Business Systems & Portals</h3>
+                      <p>Custom employee management portals, internal workflow structures, and automated frameworks built to optimize business operations.</p>
+                    </div>
+                  </div>
+                  <div className="service-card reveal-on-scroll stagger-3">
+                    <div className="card-content">
+                      <div className="icon"><i className="fas fa-globe"></i></div>
+                      <h3>Business Presence & Support</h3>
+                      <p>Google Business Profile optimization, continuous SEO enhancements, and dedicated technical support to keep your digital infrastructure ahead of competitors.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ─── FULLY RESTORED: ADVANCED PROCESS BLOCK SECTION ─── */}
+            <section id="process" className="process-advanced">
+              <div className="container">
+                <div className="process-wrapper reveal-on-scroll">
+                  
+                  <div className="process-left">
+                    <span className="section-tag">How We Execute</span>
+                    <h2>Our 3-Step Execution Framework</h2>
+                  </div>
+
+                  <div className="process-right">
+                    <div className="process-step">
+                      <span>01. Strategy</span>
+                      <p>Deep tactical market research, audience search intent mapping, and high-converting structural target layouts before typing a line of code.</p>
+                    </div>
+                    <div className="process-step">
+                      <span>02. Design</span>
+                      <p>Crafting custom premium visuals, fast response interfaces, and high-performance system dashboards structured cleanly for absolute growth optimization.</p>
+                    </div>
+                    <div className="process-step">
+                      <span>03. Growth</span>
+                      <p>Deploying automated data tracking metrics, rigorous SEO search engine visibility indexing layers, and scalable ad campaign matrices to lock in market authority.</p>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </section>
+
+            {/* Homepage About Summary Section */}
+            <section id="about-summary" className="py-16 md:py-24 relative overflow-hidden">
+              <div className="container">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center reveal-on-scroll">
+                  <div className="lg:col-span-7 text-left">
+                    <span className="section-tag">Who We Are</span>
+                    <h2 className="section-title">The Brains Driving Global Growth</h2>
+                    <p className="text-sm md:text-base text-[var(--text-main)] mb-4 leading-relaxed">
+                      EnMate is a high-performance digital marketing agency bridging localized regional authority in Kottakkal with scalable worldwide marketing operations. We don't just execute basic setups; we build custom, high-speed digital architectures designed to win market dominance.
+                    </p>
+                    <p className="text-sm text-[var(--text-muted)] mb-6 leading-relaxed">
+                      Our unified mission is simple: to transform ambitious brands into highly visible market leaders through rigorous optimization, elite creative layouts, and absolute engineering transparency.
+                    </p>
+                    <div className="flex justify-center md:justify-start">
+                      <a href="/about" className="btn btn-outline text-xs tracking-wider uppercase font-bold" style={{ paddingLeft: '35px', paddingRight: '35px' }}>
+                        Learn More About Us <i className="fas fa-arrow-right ml-2 text-[var(--accent-soft)]"></i>
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-5 grid grid-cols-2 gap-4">
+                    <div className="p-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl text-center transition-all duration-300 hover:border-[var(--accent-soft)] hover:shadow-[0_0_20px_rgba(207,4,102,0.15)]">
+                      <span className="text-[var(--accent-soft)] text-2xl md:text-3xl font-bold block mb-1">4+</span>
+                      <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">Core Disciplines</span>
+                    </div>
+                    <div className="p-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl text-center transition-all duration-300 hover:border-[var(--accent-soft)] hover:shadow-[0_0_20px_rgba(207,4,102,0.15)]">
+                      <span className="text-[var(--accent-soft)] text-2xl md:text-3xl font-bold block mb-1">100%</span>
+                      <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">Custom Code</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* High-Intent CTA Segment */}
+            <section className="cta-section">
+              <div className="container reveal-on-scroll">
+                <div className="cta-card">
+                  <div className="cta-split">
+                    <div className="cta-text text-center md:text-left">
+                      <h2>Ready to scale your brand with a premium digital marketing agency?</h2>
+                      <p className="mt-2">Let’s build something powerful together with EnMate.</p>
+                    </div>
+                    <div className="cta-action flex justify-center md:justify-start mt-6 md:mt-0">
+                      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn btn-accent">Connect Us</a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
           </main>
 
+          {/* Footer Ecosystem */}
           <footer className="footer">
             <div className="container footer-grid">
               <div className="footer-brand">
                 <span className="font-anokha footer-logo">EnMate</span>
                 <p>EnMate – Premium performance growth structures and full-stack system software solutions serving clients locally and worldwide.</p>
                 <p className="footer-global">Location: Kottakkal, Kerala, India 🇮🇳 | Globally Distributed 🌍</p>
-                <p className="text-sm text-[var(--text-muted)] mt-2"><i className="fas fa-envelope mr-2 text-[var(--accent-soft)]"></i> contact@enmate.in<br /><i className="fas fa-phone mr-2 text-[var(--accent-soft)]"></i> +91 75105 14464</p>
+                <p className="text-sm text-[var(--text-muted)] mt-2">
+                  <i className="fas fa-envelope mr-2 text-[var(--accent-soft)]"></i> contact@enmate.in<br />
+                  <i className="fas fa-phone mr-2 text-[var(--accent-soft)]"></i> +91 75105 14464
+                </p>
+                <div className="footer-socials">
+                  <a href="#" className="remove-link-underline"><i className="fab fa-instagram"></i></a>
+                  <a href="#" className="remove-link-underline"><i className="fab fa-linkedin-in"></i></a>
+                  <a href="#" className="remove-link-underline"><i className="fab fa-x-twitter"></i></a>
+                </div>
               </div>
               <div className="footer-nav">
                 <h6>Core Operations</h6>
@@ -168,14 +317,17 @@ export default function HomePage() {
                 </ul>
               </div>
               <div className="footer-nav">
-                <h6>Company Insights</h6>
+                <h6>Company Info</h6>
                 <ul className="footer-links">
-                  <li><a href="/about">Meet the Team</a></li>
+                  <li><a href="#home">Home Base</a></li>
+                  <li><a href="/about">Our Team</a></li>
                   <li><a href="/blog">Our Publications</a></li>
                 </ul>
               </div>
             </div>
-            <div className="copyright">&copy; {new Date().getFullYear()} <span className="font-anokha">EnMate</span> Digital Marketing Agency. All rights reserved.</div>
+            <div className="copyright">
+              &copy; {new Date().getFullYear()} <span className="font-anokha">EnMate</span> Digital Marketing Agency. All rights reserved.
+            </div>
           </footer>
 
         </div>

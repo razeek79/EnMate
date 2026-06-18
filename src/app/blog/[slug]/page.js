@@ -2,10 +2,12 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '../../../lib/supabase';
+import BlogCursor from '../../../components/BlogCursor';
 
 export const revalidate = 3600;
+export const dynamicParams = true; // Forces lookup of fresh items to eliminate caching 404 errors
 
-// 1. Dynamic Route Definition
+// 1. Dynamic Route Segments Engine
 export async function generateStaticParams() {
   const { data: posts } = await supabase
     .from('blogs')
@@ -15,7 +17,7 @@ export async function generateStaticParams() {
   return posts?.map((post) => ({ slug: post.slug })) || [];
 }
 
-// 2. Automated Search Engine Graph Builder (Fixed Typos Here!)
+// 2. High-Authority Server Meta Builder
 export async function generateMetadata({ params }) {
   const { slug } = params;
   const { data: post } = await supabase
@@ -47,7 +49,7 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// 3. Main Blog Page Component Rendering
+// 3. Main Post Dynamic Core Component
 export default async function BlogPostPage({ params }) {
   const { slug } = params;
 
@@ -64,10 +66,10 @@ export default async function BlogPostPage({ params }) {
 
   if (!post) notFound();
 
-  // Increment views via database RPC
+  // Trigger dynamic data logging safely
   await supabase.rpc('increment_blog_views', { post_slug: slug });
 
-  // Query related articles
+  // Query related internal articles
   const { data: related } = await supabase
     .from('blogs')
     .select('id, title, slug, featured_image, featured_image_width, featured_image_height, alt_text, published_at')
@@ -76,7 +78,7 @@ export default async function BlogPostPage({ params }) {
     .eq('status', 'published')
     .limit(3);
 
-  // Generate Table of Contents from content string headings
+  // Parse structural header components to extract a complete Table of Contents array
   const headingMatches = [...post.content.matchAll(/<h[23][^>]*>(.*?)<\/h[23]>/g)];
   const tableOfContents = headingMatches.map((match) => {
     const text = match[1].replace(/<[^>]*>/g, '');
@@ -110,6 +112,9 @@ export default async function BlogPostPage({ params }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      
+      {/* RESTORED: Site-wide interactive premium pointer ring engine */}
+      <BlogCursor />
       
       <div className="min-h-screen bg-[#05030a] text-[var(--text-main)] pt-32 pb-24">
         <div className="container max-w-[1100px]">
@@ -168,7 +173,7 @@ export default async function BlogPostPage({ params }) {
               )}
 
               <section 
-                className={`lg:col-span-${tableOfContents.length > 0 ? '8' : '12'} prose prose-invert max-w-none text-sm md:text-base leading-relaxed text-[var(--secondary)] space-y-6`}
+                className={`lg:col-span-${tableOfContents.length > 0 ? '8' : '12'} prose prose-invert max-w-none text-sm md:text-base leading-relaxed text-[var(--secondary)] space-y-6 text-left`}
                 dangerouslySetInnerHTML={{ __html: processedContent }}
               />
             </div>
