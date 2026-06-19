@@ -70,7 +70,7 @@ export default function AboutPage() {
     return () => observer.disconnect();
   }, []);
 
-  const whatsappUrl = "https://wa.me/917510514464?text=Hi%20👋,%20I%20visited%20the%20EnMate%20About%20Page.";
+  const whatsappUrl = "https://wa.me/918138881132?text=Hi%20👋,%20I%20visited%20the%20EnMate%20About%20Page.";
 
   return (
     <>

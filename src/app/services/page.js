@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function ServicesIndexPage() {
   const serviceList = Object.entries(services);
-  const whatsappUrl = "https://wa.me/917510514464?text=Hi%20👋,%20I%20found%20EnMate%20online.%20I%20want%20to%20scale%20our%20business%20with%20the%20best%20digital%20marketing%20services.";
+  const whatsappUrl = "https://wa.me/918138881132?text=Hi%20👋,%20I%20found%20EnMate%20online.%20I%20want%20to%20scale%20our%20business%20with%20the%20best%20digital%20marketing%20services.";
 
   return (
     <div className="min-h-screen w-full bg-[#05030a] text-[var(--text-main)]">

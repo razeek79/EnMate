@@ -43,8 +43,8 @@ export default function RootLayout({ children }) {
               "name": "EnMate Digital Marketing Agency",
               "url": "https://enmate.in",
               "logo": "https://enmate.in/logos/site-logo.png",
-              "email": "contact@enmate.in",
-              "telephone": "+917510514464",
+              "email": "enmate.digital@gmail.com",
+              "telephone": "+918138881132",
               "description": "Based in Kottakkal, Kerala, India, serving clients locally & worldwide with premium web engineering and conversion-driven performance marketing strategies.",
               "address": {
                 "@type": "PostalAddress",

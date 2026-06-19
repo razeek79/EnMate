@@ -47,7 +47,7 @@ export const services = {
       { step: '03. Identity System', detail: 'Logo, typography, color palette, and usage guidelines finalized.' },
       { step: '04. Asset Delivery', detail: 'Full brand kit delivered in all required formats.' },
     ],
-    technologies: ['Adobe Illustrator', 'Photoshop', 'Figma', 'After Effects'],
+    technologies: ['Adobe Illustrator', 'Adobe Photoshop', 'Figma', 'Canva'],
     faqs: [
       { q: 'What\'s included in a branding package?', a: 'Logo design, color palette, typography system, and a brand guideline document.' },
       { q: 'Can you redesign an existing brand?', a: 'Yes, we offer full rebranding services while preserving brand equity where valuable.' },

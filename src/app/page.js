@@ -142,7 +142,7 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []);
 
-  const whatsappUrl = "https://wa.me/917510514464?text=Hi%20👋,%20I%20found%20EnMate%20online.%20I%20want%20to%20scale%20our%20business%20with%20the%20best%20digital%20marketing%20services.";
+  const whatsappUrl = "https://wa.me/918138881132?text=Hi%20👋,%20I%20found%20EnMate%20online.%20I%20want%20to%20scale%20our%20business%20with%20the%20best%20digital%20marketing%20services.";
 
   return (
     <>
@@ -380,8 +380,8 @@ export default function HomePage() {
                 <p>EnMate – Premium performance growth structures and full-stack system software solutions serving clients locally and worldwide.</p>
                 <p className="footer-global">Location: Kottakkal, Kerala, India 🇮🇳 | Globally Distributed 🌍</p>
                 <p className="text-sm text-[var(--text-muted)] mt-2">
-                  <i className="fas fa-envelope mr-2 text-[var(--accent-soft)]"></i> contact@enmate.in<br />
-                  <i className="fas fa-phone mr-2 text-[var(--accent-soft)]"></i> +91 75105 14464
+                  <i className="fas fa-envelope mr-2 text-[var(--accent-soft)]"></i> enmate.digital@gmail.com<br />
+                  <i className="fas fa-phone mr-2 text-[var(--accent-soft)]"></i> +91 81388 81132
                 </p>
                 <div className="footer-socials">
                   <a href="#" className="remove-link-underline"><i className="fab fa-instagram"></i></a>

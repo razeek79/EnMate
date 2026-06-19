@@ -39,7 +39,7 @@ export default async function IndividualServicePage({ params }) {
 
   if (!service) notFound();
 
-  const whatsappUrl = `https://wa.me/917510514464?text=Hi%20👋,%20I%20want%20to%20consult%20EnMate%20regarding%20${encodeURIComponent(service.title)}.`;
+  const whatsappUrl = `https://wa.me/918138881132?text=Hi%20👋,%20I%20want%20to%20consult%20EnMate%20regarding%20${encodeURIComponent(service.title)}.`;
 
   return (
     <>
@@ -142,27 +142,6 @@ export default async function IndividualServicePage({ params }) {
                 <span className="text-[10px] uppercase font-mono tracking-wider text-[var(--accent-soft)] bg-[var(--accent)]/10 px-3 py-1 rounded-full border border-[var(--accent-soft)]/20">UI/UX Revamp Conversion Case</span>
                 <h4 className="text-base font-bold text-white">Premium Re-Engineering for Consumer Brand</h4>
                 <p className="text-xs text-[var(--text-muted)] font-light leading-relaxed">Replacing rigid templates with highly responsive, customized visual code structures to double organic transaction loops.</p>
-              </div>
-            </div>
-          </section>
-
-          {/* ─── AUTHENTIC TESTIMONIAL FEED ─── */}
-          <section className="space-y-8 text-left">
-            <div>
-              <span className="section-tag">Validation</span>
-              <h2 className="text-2xl md:text-3xl font-bold font-anokha text-white">Client Feedback</h2>
-            </div>
-            <div className="p-8 md:p-12 bg-white/[0.01] border border-white/5 rounded-3xl relative overflow-hidden">
-              <div className="absolute top-6 left-6 text-6xl font-serif text-white/5 pointer-events-none">“</div>
-              <p className="text-sm md:text-base text-[var(--secondary)] italic font-light relative z-10 leading-relaxed max-w-[850px]">
-                "EnMate completely transformed our workflow approach. The technical execution strategy is highly precise, completely custom-coded without any page builders, and the speed optimization metrics have directly improved our customer acquisition channels."
-              </p>
-              <div className="mt-6 border-t border-white/5 pt-4 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[var(--accent)]/20 border border-[var(--accent-soft)]/30 flex items-center justify-center font-mono text-xs font-bold text-white">M</div>
-                <div>
-                  <p className="text-xs font-bold text-white">Operations Director</p>
-                  <p className="text-[10px] text-neutral-500 font-mono">Verified Growth Partner</p>
-                </div>
               </div>
             </div>
           </section>
