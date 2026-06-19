@@ -456,3 +456,132 @@ h2.section-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; marg
     padding-left: 24px;
     margin-bottom: 1.2rem;
 }
+
+/* ─── PREMIUM ENHANCEMENT LAYER (additive only) ─── */
+
+/* Floating badge */
+.badge {
+    animation: badgeFloat 4s ease-in-out infinite;
+}
+@keyframes badgeFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* Word-by-word hero text reveal */
+.word-reveal-wrap { display: inline-block; overflow: hidden; }
+.word-reveal {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(110%);
+    animation: wordUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes wordUp {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero description fade-in after words finish */
+.hero-fade-in {
+    opacity: 0;
+    animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Extra stagger steps for grids with more than 3 items */
+.stagger-4 { transition-delay: 0.35s; }
+.stagger-5 { transition-delay: 0.45s; }
+.stagger-6 { transition-delay: 0.55s; }
+
+/* Icon micro-bounce on card reveal */
+.service-card .icon {
+    transform-origin: center;
+}
+.service-card.is-visible .icon {
+    animation: iconPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+@keyframes iconPop {
+    0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Shine sweep across buttons on hover */
+.btn { position: relative; overflow: hidden; }
+.btn::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -120%;
+    width: 60%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.7s ease;
+    pointer-events: none;
+}
+.btn:hover::after { left: 130%; }
+
+/* Stat counter pop */
+.stat-pop {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.is-visible .stat-pop { transform: scale(1); }
+
+/* Process step number glow pulse on hover (subtle, non-destructive) */
+.process-step span {
+    transition: var(--transition), text-shadow 0.4s ease;
+}
+.process-step:hover span {
+    text-shadow: 0 0 18px rgba(255, 90, 160, 0.6);
+}
+
+/* CTA card ambient gradient sweep */
+.cta-card {
+    background-size: 200% 200%;
+    background-image: linear-gradient(120deg, var(--cta-bg), rgba(207,4,102,0.06), var(--cta-bg));
+    animation: ctaGradient 8s ease infinite;
+}
+@keyframes ctaGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Logo subtle entrance */
+.logo-container { animation: fadeUp 0.6s ease both; }
+
+/* ─── SERVICE CARD CURTAIN REVEAL (Option B — overlay-based) ─── */
+.service-card.reveal-on-scroll {
+    opacity: 1;       /* card itself stays visible, curtain panel does the hiding */
+    transform: none;
+    filter: none;
+    position: relative;
+}
+
+/* The curtain panel sits above everything inside the card */
+.service-card .curtain-panel {
+    position: absolute;
+    inset: 0;
+    background: #05030a;
+    z-index: 20;
+    transform: translateY(0%);
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+
+.service-card.is-visible .curtain-panel {
+    transform: translateY(-100%);
+}
+
+/* Content rises slightly as the curtain lifts */
+.service-card .card-content {
+    transform: translateY(18px);
+    opacity: 0;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s,
+                opacity 0.7s ease 0.25s;
+}
+
+.service-card.is-visible .card-content {
+    transform: translateY(0);
+    opacity: 1;
+}

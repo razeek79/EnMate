@@ -2,6 +2,36 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
+
+function CountUp({ end, suffix = '', duration = 1400 }) {
+  const [value, setValue] = useState(0);
+  const ref = useRef(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !started.current) {
+        started.current = true;
+        const start = performance.now();
+        const animate = (now) => {
+          const progress = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          setValue(Math.floor(eased * end));
+          if (progress < 1) requestAnimationFrame(animate);
+          else setValue(end);
+        };
+        requestAnimationFrame(animate);
+      }
+    }, { threshold: 0.4 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [end, duration]);
+
+  return <span ref={ref}>{value}{suffix}</span>;
+}
+
 export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -11,12 +41,11 @@ export default function HomePage() {
   // 🛠️ PATH A INTEGRATION: IMMEDIATE INVITATION HASH INTERCEPTOR
   useEffect(() => {
     if (window.location.hash && (window.location.hash.includes('type=invite') || window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token='))) {
-      // Direct javascript relocation preserves the exact raw hash parameters for your confirm route handler
       window.location.href = `/auth/confirm${window.location.hash}`;
     }
   }, []);
 
-  // 1. DYNAMIC MOUSE-TRACKING ACCENT GLOW CONTROLLER
+  // 1. DYNAMIC MOUSE-TRACKING ACCENT GLOW + 3D TILT CONTROLLER
   useEffect(() => {
     const handleMouseMove = (e) => {
       const cards = document.querySelectorAll('.service-card');
@@ -26,6 +55,18 @@ export default function HomePage() {
         const y = e.clientY - rect.top;
         card.style.setProperty('--mouse-x', `${x}px`);
         card.style.setProperty('--mouse-y', `${y}px`);
+
+        // ─── 3D TILT (Option A) ───
+        const isInside = x >= 0 && x <= rect.width && y >= 0 && y <= rect.height;
+        if (isInside) {
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = ((y - centerY) / centerY) * -6;
+          const rotateY = ((x - centerX) / centerX) * 6;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px) scale(1.01)`;
+        } else {
+          card.style.transform = '';
+        }
       });
     };
 
@@ -54,10 +95,18 @@ export default function HomePage() {
     const onMouseEnterLink = () => ring.classList.add('cursor-hovered');
     const onMouseLeaveLink = () => ring.classList.remove('cursor-hovered');
 
+    // Reset tilt cleanly when the mouse leaves a card
+    const onCardLeave = (e) => {
+      e.currentTarget.style.transform = '';
+    };
+
     const addHoverListeners = () => {
       document.querySelectorAll('a, button, .service-card, .btn').forEach(item => {
         item.addEventListener('mouseenter', onMouseEnterLink);
         item.addEventListener('mouseleave', onMouseLeaveLink);
+      });
+      document.querySelectorAll('.service-card').forEach(card => {
+        card.addEventListener('mouseleave', onCardLeave);
       });
     };
 
@@ -68,6 +117,9 @@ export default function HomePage() {
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       cancelAnimationFrame(animId);
+      document.querySelectorAll('.service-card').forEach(card => {
+        card.removeEventListener('mouseleave', onCardLeave);
+      });
     };
   }, []);
 
@@ -112,7 +164,7 @@ export default function HomePage() {
               <nav className="navbar">
                 <ul className={`nav-menu ${isMenuOpen ? 'active !flex' : 'hidden lg:flex'}`}>
                   <li><a href="#home" onClick={() => setIsMenuOpen(false)}>Home</a></li>
-                  <li><a href="#services" onClick={() => setIsMenuOpen(false)}>Services</a></li>
+                  <li><a href="/services" onClick={() => setIsMenuOpen(false)}>Services</a></li>
                   <li><a href="/about">About Us</a></li>
                   <li><a href="/blog" onClick={() => setIsMenuOpen(false)}>Blog</a></li>
                   <li className="nav-cta-mobile flex justify-center mt-4">
@@ -146,13 +198,24 @@ export default function HomePage() {
                   <span className="badge">Based in Kottakkal, Kerala, India | Serving Clients Locally & Worldwide</span>
                   <h1>
                     <span className="font-anokha gradient-text">EnMate</span>{' '}
-                    <span className="hero-light">Worldwide Digital Marketing Service</span>
+                    <span className="hero-light">
+                      {"Worldwide Digital Marketing Service".split(' ').map((word, i) => (
+                        <span className="word-reveal-wrap" key={i}>
+                          <span
+                            className="word-reveal"
+                            style={{ animationDelay: `${0.15 + i * 0.08}s` }}
+                          >
+                            {word}&nbsp;
+                          </span>
+                        </span>
+                      ))}
+                    </span>
                   </h1>
-                  <p className="hero-subtitle">Premium Digital Assets Engineered for Market Dominance</p>
-                  <p className="hero-description">
+                  <p className="hero-subtitle hero-fade-in" style={{ animationDelay: '0.6s' }}>Premium Digital Assets Engineered for Market Dominance</p>
+                  <p className="hero-description hero-fade-in" style={{ animationDelay: '0.75s' }}>
                     We don't just run standard ad campaigns; We engineer high-performance conversion funnels, custom web apps, search engine optimization visibility models, and premium visual branding systems designed to capture audience intent and scale your business operations globally.
                   </p>
-                  <div className="hero-btns">
+                  <div className="hero-btns hero-fade-in" style={{ animationDelay: '0.9s' }}>
                     <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary">Connect Us</a>
                     <a href="#services" className="btn btn-outline">Explore Services</a>
                   </div>
@@ -173,6 +236,7 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                   <div className="service-card reveal-on-scroll stagger-1">
+                    <div className="curtain-panel"></div>
                     <div className="card-content">
                       <div className="icon"><i className="fas fa-laptop-code"></i></div>
                       <h3>Website Development</h3>
@@ -180,6 +244,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="service-card reveal-on-scroll stagger-2">
+                    <div className="curtain-panel"></div>
                     <div className="card-content">
                       <div className="icon"><i className="fas fa-palette"></i></div>
                       <h3>Branding & Graphic Design</h3>
@@ -187,6 +252,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="service-card reveal-on-scroll stagger-3">
+                    <div className="curtain-panel"></div>
                     <div className="card-content">
                       <div className="icon"><i className="fas fa-chart-line"></i></div>
                       <h3>Digital Marketing & Growth</h3>
@@ -194,6 +260,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="service-card reveal-on-scroll stagger-1">
+                    <div className="curtain-panel"></div>
                     <div className="card-content">
                       <div className="icon"><i className="fas fa-video"></i></div>
                       <h3>Video & Creative Production</h3>
@@ -201,6 +268,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="service-card reveal-on-scroll stagger-2">
+                    <div className="curtain-panel"></div>
                     <div className="card-content">
                       <div className="icon"><i className="fas fa-diagram-project"></i></div>
                       <h3>Business Systems & Portals</h3>
@@ -208,6 +276,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="service-card reveal-on-scroll stagger-3">
+                    <div className="curtain-panel"></div>
                     <div className="card-content">
                       <div className="icon"><i className="fas fa-globe"></i></div>
                       <h3>Business Presence & Support</h3>
@@ -269,11 +338,15 @@ export default function HomePage() {
 
                   <div className="lg:col-span-5 grid grid-cols-2 gap-4">
                     <div className="p-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl text-center transition-all duration-300 hover:border-[var(--accent-soft)] hover:shadow-[0_0_20px_rgba(207,4,102,0.15)]">
-                      <span className="text-[var(--accent-soft)] text-2xl md:text-3xl font-bold block mb-1">4+</span>
+                      <span className="text-[var(--accent-soft)] text-2xl md:text-3xl font-bold block mb-1">
+                        <CountUp end={4} suffix="+" />
+                      </span>
                       <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">Core Disciplines</span>
                     </div>
                     <div className="p-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl text-center transition-all duration-300 hover:border-[var(--accent-soft)] hover:shadow-[0_0_20px_rgba(207,4,102,0.15)]">
-                      <span className="text-[var(--accent-soft)] text-2xl md:text-3xl font-bold block mb-1">100%</span>
+                      <span className="text-[var(--accent-soft)] text-2xl md:text-3xl font-bold block mb-1">
+                        <CountUp end={100} suffix="%" />
+                      </span>
                       <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">Custom Code</span>
                     </div>
                   </div>

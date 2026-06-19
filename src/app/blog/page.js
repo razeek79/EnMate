@@ -35,7 +35,7 @@ export default function BlogListingPage() {
     fetchPublishedPosts();
   }, []);
 
-  // 2. SITE-WIDE INTERACTIVE CURSOR MOUSE-TRACKING MODULE
+  // 2. SITE-WIDE INTERACTIVE CURSOR MOUSE-TRACKING MODULE + 3D TILT
   useEffect(() => {
     const handleMouseMove = (e) => {
       const cards = document.querySelectorAll('.service-card');
@@ -45,6 +45,18 @@ export default function BlogListingPage() {
         const y = e.clientY - rect.top;
         card.style.setProperty('--mouse-x', `${x}px`);
         card.style.setProperty('--mouse-y', `${y}px`);
+
+        // ─── 3D TILT DESIGN LAYER SYNC ───
+        const isInside = x >= 0 && x <= rect.width && y >= 0 && y <= rect.height;
+        if (isInside) {
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = ((y - centerY) / centerY) * -6;
+          const rotateY = ((x - centerX) / centerX) * 6;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px) scale(1.01)`;
+        } else {
+          card.style.transform = '';
+        }
       });
     };
 
@@ -73,18 +85,51 @@ export default function BlogListingPage() {
     const onMouseEnterLink = () => ring.classList.add('cursor-hovered');
     const onMouseLeaveLink = () => ring.classList.remove('cursor-hovered');
 
+    // Reset tilt cleanly when mouse leaves the bounding matrix area
+    const onCardLeave = (e) => {
+      e.currentTarget.style.transform = '';
+    };
+
     window.addEventListener('mousemove', onMouseMove);
     const animId = requestAnimationFrame(tick);
 
-    document.querySelectorAll('a, button, .service-card, .btn').forEach(item => {
-      item.addEventListener('mouseenter', onMouseEnterLink);
-      item.addEventListener('mouseleave', onMouseLeaveLink);
-    });
+    const setupListeners = () => {
+      document.querySelectorAll('a, button, .service-card, .btn').forEach(item => {
+        item.addEventListener('mouseenter', onMouseEnterLink);
+        item.addEventListener('mouseleave', onMouseLeaveLink);
+      });
+      document.querySelectorAll('.service-card').forEach(card => {
+        card.addEventListener('mouseleave', onCardLeave);
+      });
+    };
+    setupListeners();
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       cancelAnimationFrame(animId);
+      document.querySelectorAll('.service-card').forEach(card => {
+        card.removeEventListener('mouseleave', onCardLeave);
+      });
     };
+  }, [posts]);
+
+  // 3. SCROLL INTERSECTION OBSERVER FOR VISIBILITY MODIFIERS
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, { 
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    });
+
+    const targets = document.querySelectorAll('.reveal-on-scroll');
+    targets.forEach(target => observer.observe(target));
+
+    return () => observer.disconnect();
   }, [posts]);
 
   if (loading) {
@@ -123,14 +168,17 @@ export default function BlogListingPage() {
             <p className="text-center text-[var(--text-muted)] mt-12">No articles published yet. Check back soon!</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {posts.map((post) => (
+              {posts.map((post, i) => (
                 <Link 
                   href={`/blog/${post.slug}`} 
                   key={post.id} 
-                  className="group service-card block relative overflow-hidden transition-all duration-300 hover:-translate-y-2 text-left"
+                  className={`service-card reveal-on-scroll stagger-${(i % 3) + 1} block relative overflow-hidden text-left`}
                 >
+                  {/* OPTION B: CURTAIN REVEAL PANEL INTEGRATION */}
+                  <div className="curtain-panel"></div>
+
                   <div className="card-content">
-                    {/* Fixed image wrapper layout bounding */}
+                    {/* Next.js Optimized WebP Feature Image Wrapper */}
                     <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden mb-5 bg-neutral-900 border border-[var(--card-border)]">
                       <Image
                         src={post.featured_image}

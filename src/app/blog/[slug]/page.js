@@ -49,7 +49,7 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// 3. Main Post Dynamic Core Component
+// 3. Main Blog Page Component Rendering
 export default async function BlogPostPage({ params }) {
   const { slug } = params;
 
@@ -113,7 +113,7 @@ export default async function BlogPostPage({ params }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       
-      {/* RESTORED: Site-wide interactive premium pointer ring engine */}
+      {/* Site-wide interactive premium pointer ring engine */}
       <BlogCursor />
       
       <div className="min-h-screen bg-[#05030a] text-[var(--text-main)] pt-32 pb-24">
@@ -148,7 +148,7 @@ export default async function BlogPostPage({ params }) {
             <div className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden mb-12 border border-white/10 shadow-2xl">
               <Image
                 src={post.featured_image}
-                alt={post.alt_text}
+                alt={post.alt_text || post.title}
                 width={post.featured_image_width || 1200}
                 height={post.featured_image_height || 630}
                 className="object-cover w-full h-full"
@@ -179,16 +179,34 @@ export default async function BlogPostPage({ params }) {
             </div>
           </article>
 
+          {/* FIX: Related Articles Section RESTORED and OPTIMIZED */}
           {related && related.length > 0 && (
             <div className="mt-20 border-t border-white/10 pt-12 text-left">
               <h3 className="text-xl md:text-2xl font-bold mb-8 text-white font-anokha">Related Articles</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {related.map((rel) => (
-                  <Link href={`/blog/${rel.slug}`} key={rel.id} className="service-card block p-4 group rounded-xl bg-white/[0.02] border border-white/5 hover:border-[var(--accent-soft)] transition-all duration-300">
-                    <div className="relative aspect-[16/10] rounded-lg overflow-hidden mb-3">
-                      <Image src={rel.featured_image} alt={rel.alt_text} width={rel.featured_image_width || 1200} height={rel.featured_image_height || 630} className="object-cover w-full h-full transform transition-transform duration-300 group-hover:scale-105" />
+                {related.map((rel, i) => (
+                  <Link 
+                    href={`/blog/${rel.slug}`} 
+                    key={rel.id} 
+                    className="block p-4 group rounded-xl bg-white/[0.02] border border-white/5 hover:border-[var(--accent-soft)] transition-all duration-300 hover:-translate-y-1.5 shadow-lg relative overflow-hidden"
+                    style={{
+                      // Premium fade-up delay compiled without browser observer script requirements
+                      animation: 'fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
+                      animationDelay: `${0.1 * (i + 1)}s`
+                    }}
+                  >
+                    <div className="relative aspect-[16/10] rounded-lg overflow-hidden mb-3 bg-neutral-900 border border-white/5">
+                      <Image 
+                        src={rel.featured_image} 
+                        alt={rel.alt_text || rel.title} 
+                        width={rel.featured_image_width || 1200} 
+                        height={rel.featured_image_height || 630} 
+                        className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-105" 
+                      />
                     </div>
-                    <h4 className="text-sm font-bold text-white group-hover:text-[var(--accent-soft)] transition-colors line-clamp-2">{rel.title}</h4>
+                    <h4 className="text-sm font-bold text-white group-hover:text-[var(--accent-soft)] transition-colors line-clamp-2 leading-snug">
+                      {rel.title}
+                    </h4>
                   </Link>
                 ))}
               </div>
