@@ -384,17 +384,20 @@ export default function HomePage() {
                   <i className="fas fa-phone mr-2 text-[var(--accent-soft)]"></i> +91 81388 81132
                 </p>
                 <div className="footer-socials">
-                  <a href="#" className="remove-link-underline"><i className="fab fa-instagram"></i></a>
-                  <a href="#" className="remove-link-underline"><i className="fab fa-linkedin-in"></i></a>
-                  <a href="#" className="remove-link-underline"><i className="fab fa-x-twitter"></i></a>
+                  <a href="https://www.instagram.com/enmate.in" target="_blank" rel="noopener noreferrer" className="remove-link-underline" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+                  <a href="https://www.linkedin.com/company/enmate" target="_blank" rel="noopener noreferrer" className="remove-link-underline" aria-label="LinkedIn"><i className="fab fa-linkedin-in"></i></a>
+                  <a href="https://www.youtube.com/@enmate.official" target="_blank" rel="noopener noreferrer" className="remove-link-underline" aria-label="YouTube"
+>
+  <i className="fab fa-youtube"></i>
+</a>
                 </div>
               </div>
               <div className="footer-nav">
                 <h6>Core Operations</h6>
                 <ul className="footer-links">
-                  <li><a href="#services">Digital Marketing</a></li>
-                  <li><a href="#services">SEO Optimization</a></li>
-                  <li><a href="#services">Web Architecture</a></li>
+                  <li><a href="/services">Digital Marketing</a></li>
+                  <li><a href="/services">SEO Optimization</a></li>
+                  <li><a href="/services">Web Architecture</a></li>
                 </ul>
               </div>
               <div className="footer-nav">
