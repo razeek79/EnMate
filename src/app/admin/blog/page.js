@@ -11,6 +11,15 @@ export default function NextGenProductionAdminBlog() {
   const [uploadStatus, setUploadStatus] = useState('');
   const [seoScore, setSeoScore] = useState(0);
   const [seoWarnings, setSeoWarnings] = useState([]);
+  
+  // Inline Metadata Creation States
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newTagName, setNewTagName] = useState('');
+  const [isCreatingMeta, setIsCreatingMeta] = useState(false);
+
+  // Editorial Management States
+  const [adminPosts, setAdminPosts] = useState([]);
+  const [editingPostId, setEditingPostId] = useState(null);
   const editorRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -48,9 +57,8 @@ export default function NextGenProductionAdminBlog() {
     window.addEventListener('mousemove', onMouseMove);
     const animId = requestAnimationFrame(tick);
 
-    // Bind reactive hover listeners securely to custom interface nodes
     const refreshHoverBindings = () => {
-      document.querySelectorAll('a, button, .service-card, .btn').forEach(item => {
+      document.querySelectorAll('a, button, .service-card, .btn, .action-row-btn, .meta-inline-btn').forEach(item => {
         item.removeEventListener('mouseenter', onMouseEnterLink);
         item.removeEventListener('mouseleave', onMouseLeaveLink);
         item.addEventListener('mouseenter', onMouseEnterLink);
@@ -64,19 +72,22 @@ export default function NextGenProductionAdminBlog() {
       window.removeEventListener('mousemove', onMouseMove);
       cancelAnimationFrame(animId);
     };
-  }, [categories, availableTags, selectedTags, seoWarnings]);
+  }, [categories, availableTags, selectedTags, seoWarnings, adminPosts]);
 
-  // 2. DYNAMIC SYSTEM SEED LOADER (CATEGORIES & TAGS)
+  // 2. DYNAMIC SYSTEM SEED LOADER & MANAGEMENT LOG LISTER
+  const refreshAdminDashboardLog = async () => {
+    const [catRes, tagRes, blogRes] = await Promise.all([
+      supabase.from('categories').select('id, name'),
+      supabase.from('tags').select('id, name'),
+      supabase.from('blogs').select('id, title, slug, status, featured_image, category_id').order('created_at', { ascending: false })
+    ]);
+    if (catRes.data) setCategories(catRes.data);
+    if (tagRes.data) setAvailableTags(tagRes.data);
+    if (blogRes.data) setAdminPosts(blogRes.data);
+  };
+
   useEffect(() => {
-    async function seedAdminMetadata() {
-      const [catRes, tagRes] = await Promise.all([
-        supabase.from('categories').select('id, name'),
-        supabase.from('tags').select('id, name')
-      ]);
-      if (catRes.data) setCategories(catRes.data);
-      if (tagRes.data) setAvailableTags(tagRes.data);
-    }
-    seedAdminMetadata();
+    refreshAdminDashboardLog();
   }, []);
 
   // 3. RUN REAL-TIME SEO CRADLE SCORING ALGORITHM
@@ -90,15 +101,12 @@ export default function NextGenProductionAdminBlog() {
       return;
     }
 
-    // Title Parameter Checks
     if (formData.metaTitle.length >= 50 && formData.metaTitle.length <= 60) { score += 20; }
     else { warnings.push('Meta Title length is out of optimal search boundary (50-60 characters).'); }
 
-    // Description Parameter Checks
     if (formData.metaDescription.length >= 130 && formData.metaDescription.length <= 160) { score += 20; }
     else { warnings.push('Meta Description length is out of optimal click boundary (130-160 characters).'); }
 
-    // Focus Keyword Density Evaluation
     if (formData.focusKeyword) {
       score += 15;
       const cleanContent = formData.content.toLowerCase();
@@ -107,17 +115,71 @@ export default function NextGenProductionAdminBlog() {
       else { warnings.push(`Focus Keyword density low (${keywordCount} matches). Aim for at least 3 appearances.`); }
     } else { warnings.push('Target Search Focus Keyword is missing.'); }
 
-    // Media Alternate Parsing Checks
     if (formData.altText && formData.altText.length > 10) { score += 15; }
     else { warnings.push('Image Alternate validation text is missing or too brief for screen readers.'); }
 
-    // Document Semantic Tag Checks
     if (formData.content.includes('<h2') || formData.content.includes('<h3')) { score += 15; }
     else { warnings.push('Semantic structure layout missing: Incorporate at least one secondary H2 or H3 anchor point.'); }
 
     setSeoScore(score);
     setSeoWarnings(warnings);
   }, [formData.title, formData.metaTitle, formData.metaDescription, formData.focusKeyword, formData.altText, formData.content]);
+
+  // 🛠️ INLINE MASTER CATEGORY INJECTION ENGINE
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+    
+    setIsCreatingMeta(true);
+    const catSlug = newCategoryName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').trim();
+
+    try {
+      const { data: newCat, error } = await supabase
+        .from('categories')
+        .insert([{ name: newCategoryName.trim(), slug: catSlug }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCategories(prev => [...prev, newCat]);
+      setFormData(prev => ({ ...prev, categoryId: newCat.id }));
+      setNewCategoryName('');
+      alert(`Success! Master Category area "${newCat.name}" generated safely.`);
+    } catch (err) {
+      alert(`Database rejected Category creation: ${err.message}`);
+    } finally {
+      setIsCreatingMeta(false);
+    }
+  };
+
+  // 🛠️ INLINE MASTER TAG INJECTION ENGINE
+  const handleCreateTag = async (e) => {
+    e.preventDefault();
+    if (!newTagName.trim()) return;
+
+    setIsCreatingMeta(true);
+    const tagSlug = newTagName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').trim();
+
+    try {
+      const { data: newTag, error } = await supabase
+        .from('tags')
+        .insert([{ name: newTagName.trim(), slug: tagSlug }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setAvailableTags(prev => [...prev, newTag]);
+      setSelectedTags(prev => [...prev, newTag.id]);
+      setNewTagName('');
+      alert(`Success! Relational structural tag "${newTag.name}" logged.`);
+    } catch (err) {
+      alert(`Database rejected Tag creation: ${err.message}`);
+    } finally {
+      setIsCreatingMeta(false);
+    }
+  };
 
   const handleTitleChange = (e) => {
     const val = e.target.value;
@@ -148,7 +210,6 @@ export default function NextGenProductionAdminBlog() {
     return Math.max(1, Math.ceil(words / 220));
   };
 
-  // Deprecation-proof structural block insertion engine
   const handleToolbarFormat = (tag) => {
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
@@ -163,7 +224,7 @@ export default function NextGenProductionAdminBlog() {
       range.insertNode(element);
     } else {
       const element = document.createElement(tag);
-      element.innerHTML = '&#8203;'; // Hidden spacer element to stabilize carriage vectors
+      element.innerHTML = '&#8203;'; 
       range.insertNode(element);
     }
     
@@ -172,26 +233,23 @@ export default function NextGenProductionAdminBlog() {
     }
   };
 
-  // 4. SECURE DIMENSIONAL & WEBP SPECIFICATION PROOFING
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setUploadStatus('Analyzing graphic parameters...');
-
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = function (event) {
       const imageInstance = new Image();
       imageInstance.src = event.target.result;
-      
       imageInstance.onload = async function () {
         const width = this.width;
         const height = this.height;
 
         if (width < 1200 || height < 630) {
-          alert(`🚨 PROOFING FAILURE: Featured assets must measure at least 1200×630px for high-density displays. Chosen file dimensions: ${width}×${height}px.`);
-          setUploadStatus('Asset rejected: Under minimum dimensions.');
+          alert(`🚨 PROOFING FAILURE: Featured assets must measure at least 1200×630px. Dimensions: ${width}×${height}px.`);
+          setUploadStatus('Asset rejected.');
           e.target.value = ''; 
           return;
         }
@@ -222,16 +280,92 @@ export default function NextGenProductionAdminBlog() {
           setUploadStatus('Asset verified and launched live.');
         } catch (err) {
           console.error(err);
-          setUploadStatus('Authorization error processing storage array maps.');
+          setUploadStatus('Authorization error processing storage bucket maps.');
         }
       };
     };
   };
 
+  const loadPostToWorkspace = async (postId) => {
+    try {
+      const { data: currentPost, error } = await supabase
+        .from('blogs')
+        .select('*, blog_tags(tag_id)')
+        .eq('id', postId)
+        .single();
+
+      if (error) throw error;
+
+      setEditingPostId(currentPost.id);
+      setFormData({
+        title: currentPost.title,
+        slug: currentPost.slug,
+        excerpt: currentPost.excerpt || '',
+        content: currentPost.content || '',
+        focusKeyword: currentPost.focus_keyword || '',
+        metaTitle: currentPost.meta_title || '',
+        metaDescription: currentPost.meta_description || '',
+        altText: currentPost.alt_text || '',
+        authorName: currentPost.author_name || 'EnMate Team',
+        categoryId: currentPost.category_id || '',
+        status: currentPost.status || 'draft',
+        featuredImage: currentPost.featured_image || '',
+        imgWidth: currentPost.featured_image_width || 1200,
+        imgHeight: currentPost.featured_image_height || 630
+      });
+
+      if (editorRef.current) {
+        editorRef.current.innerHTML = currentPost.content || '';
+      }
+
+      const activeAssociatedTags = currentPost.blog_tags.map(t => t.tag_id);
+      setSelectedTags(activeAssociatedTags);
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      alert(`Failed to pull data context layer: ${err.message}`);
+    }
+  };
+
+  const executeDataPurgeWorkflow = async (post) => {
+    const confirmation = confirm(`Are you sure you want to permanently delete "${post.title}"?\n\nThis will remove relational blog_tags and its storage asset layout completely.`);
+    if (!confirmation) return;
+
+    try {
+      if (post.featured_image) {
+        const fileLocationPath = post.featured_image.split('/storage/v1/object/public/blog-images/')[1];
+        if (fileLocationPath) {
+          await supabase.storage.from('blog-images').remove([fileLocationPath]);
+        }
+      }
+
+      await supabase.from('blog_tags').delete().eq('blog_id', post.id);
+
+      const { error: deletionError } = await supabase.from('blogs').delete().eq('id', post.id);
+      if (deletionError) throw deletionError;
+
+      alert('Content lifecycle entries purges completed safely.');
+      
+      if (editingPostId === post.id) {
+        setEditingPostId(null);
+        if (editorRef.current) editorRef.current.innerHTML = '';
+        setSelectedTags([]);
+        setFormData({
+          title: '', slug: '', excerpt: '', content: '', focusKeyword: '',
+          metaTitle: '', metaDescription: '', altText: '', authorName: 'EnMate Team',
+          categoryId: '', status: 'draft', featuredImage: '', imgWidth: 0, imgHeight: 0
+        });
+      }
+      refreshAdminDashboardLog();
+    } catch (err) {
+      alert(`Purge execution rejected by backend: ${err.message}`);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.featuredImage) {
-      alert('A verified 1200x630 pixel graphic asset header is mandatory.');
+      alert('A verified graphic asset header is mandatory.');
       return;
     }
 
@@ -239,7 +373,6 @@ export default function NextGenProductionAdminBlog() {
     let targetSlug = formData.slug;
 
     try {
-      // 5. INFINITE ACCIDENT SLUG COLLISION LOOP SAFEGUARD
       let absoluteUniqueFound = false;
       let counter = 0;
 
@@ -247,11 +380,11 @@ export default function NextGenProductionAdminBlog() {
         const currentCheckSlug = counter === 0 ? targetSlug : `${targetSlug}-${counter}`;
         const { data: duplicateMatch } = await supabase
           .from('blogs')
-          .select('slug')
+          .select('slug, id')
           .eq('slug', currentCheckSlug)
           .maybeSingle();
 
-        if (!duplicateMatch) {
+        if (!duplicateMatch || duplicateMatch.id === editingPostId) {
           targetSlug = currentCheckSlug;
           absoluteUniqueFound = true;
         } else {
@@ -259,34 +392,49 @@ export default function NextGenProductionAdminBlog() {
         }
       }
 
-      const { data: newPost, error: postError } = await supabase
-        .from('blogs')
-        .insert([{
-          title: formData.title,
-          slug: targetSlug,
-          excerpt: formData.excerpt,
-          content: formData.content,
-          featured_image: formData.featuredImage,
-          featured_image_width: formData.imgWidth,
-          featured_image_height: formData.imgHeight,
-          alt_text: formData.altText,
-          meta_title: formData.metaTitle,
-          meta_description: formData.metaDescription,
-          focus_keyword: formData.focusKeyword,
-          author_name: formData.authorName,
-          reading_time: getReadingTime(formData.content),
-          status: formData.status,
-          category_id: formData.categoryId || null,
-          published_at: formData.status === 'published' ? new Date().toISOString() : null
-        }])
-        .select()
-        .single();
+      const postRowObject = {
+        title: formData.title,
+        slug: targetSlug,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        featured_image: formData.featuredImage,
+        featured_image_width: formData.imgWidth,
+        featured_image_height: formData.imgHeight,
+        alt_text: formData.altText,
+        meta_title: formData.metaTitle,
+        meta_description: formData.metaDescription,
+        focus_keyword: formData.focusKeyword,
+        author_name: formData.authorName,
+        reading_time: getReadingTime(formData.content),
+        status: formData.status,
+        category_id: formData.categoryId || null,
+        published_at: formData.status === 'published' ? new Date().toISOString() : null
+      };
 
-      if (postError) throw postError;
+      let activeBlogId = editingPostId;
 
-      if (selectedTags.length > 0 && newPost) {
+      if (editingPostId) {
+        const { error: updateError } = await supabase
+          .from('blogs')
+          .update(postRowObject)
+          .eq('id', editingPostId);
+
+        if (updateError) throw updateError;
+        await supabase.from('blog_tags').delete().eq('blog_id', editingPostId);
+      } else {
+        const { data: newPost, error: postError } = await supabase
+          .from('blogs')
+          .insert([postRowObject])
+          .select()
+          .single();
+
+        if (postError) throw postError;
+        if (newPost) activeBlogId = newPost.id;
+      }
+
+      if (selectedTags.length > 0 && activeBlogId) {
         const tagJunctionRows = selectedTags.map(tagId => ({
-          blog_id: newPost.id,
+          blog_id: activeBlogId,
           tag_id: tagId
         }));
         const { error: junctionError } = await supabase
@@ -295,8 +443,9 @@ export default function NextGenProductionAdminBlog() {
         if (junctionError) throw junctionError;
       }
 
-      alert(`Success! Content fully integrated using clean dynamic URL routing address: /blog/${targetSlug}`);
+      alert(editingPostId ? 'Content successfully re-aligned.' : `Success! Content fully integrated: /blog/${targetSlug}`);
       
+      setEditingPostId(null);
       if (editorRef.current) editorRef.current.innerHTML = '';
       setSelectedTags([]);
       setFormData({
@@ -304,8 +453,9 @@ export default function NextGenProductionAdminBlog() {
         metaTitle: '', metaDescription: '', altText: '', authorName: 'EnMate Team',
         categoryId: '', status: 'draft', featuredImage: '', imgWidth: 0, imgHeight: 0
       });
+      refreshAdminDashboardLog();
     } catch (err) {
-      alert(`Database rejected layer transaction map: ${err.message}`);
+      alert(`Database rejected layer transaction: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -313,20 +463,20 @@ export default function NextGenProductionAdminBlog() {
 
   return (
     <>
-      {/* Target core pointer nodes */}
       <div id="cursor-dot" className="custom-cursor-dot" />
       <div id="cursor-ring" className="custom-cursor-ring" />
 
       <div className="min-h-screen bg-[#05030a] text-[var(--text-main)] pt-24 pb-12 px-4 md:px-8">
-        <div className="w-full max-w-[1700px] mx-auto">
+        <div className="w-full max-w-[1700px] mx-auto space-y-12">
           
-          <div className="mb-8 border-b border-white/5 pb-4 flex flex-wrap justify-between items-center gap-4">
+          <div className="border-b border-white/5 pb-4 flex flex-wrap justify-between items-center gap-4">
             <div>
               <span className="section-tag">Internal Content CMS Control Desk</span>
-              <h1 className="text-3xl md:text-4xl font-bold font-anokha gradient-text">EnMate Authority Content Composer</h1>
+              <h1 className="text-3xl md:text-4xl font-bold font-anokha gradient-text">
+                {editingPostId ? 'Modify Strategy Document Mode' : 'EnMate Authority Content Composer'}
+              </h1>
             </div>
             
-            {/* REAL-TIME SEO INSIGHT INTERACTION CARD BLOCK */}
             <div className="bg-[#0e0a1a] border border-white/10 rounded-2xl p-4 flex items-center gap-4 shadow-lg min-w-[240px]">
               <div className="relative flex items-center justify-center">
                 <svg className="w-16 h-16 transform -rotate-90">
@@ -347,143 +497,184 @@ export default function NextGenProductionAdminBlog() {
 
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
             
-            {/* LEFT INTERACTIVE FIELD COMPONENT CONTROLLER COLUMN */}
-            <form onSubmit={handleSubmit} className="xl:col-span-7 bg-[#07040f]/80 border border-white/5 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-xl text-left">
+            {/* LEFT FORM FIELD CONFIGURATIONS */}
+            <div className="xl:col-span-7 space-y-6">
               
-              {seoWarnings.length > 0 && (
-                <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl space-y-1">
-                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block">⚠️ Search Engine Compliance Optimization Tips:</span>
-                  <ul className="list-disc pl-5 space-y-1 text-[11px] text-amber-200/70 font-light">
-                    {seoWarnings.slice(0, 3).map((warn, i) => <li key={i}>{warn}</li>)}
-                  </ul>
-                </div>
-              )}
+              {/* ─── NEW FEATURE: METADATA QUICK CREATION LAYER PANEL ─── */}
+              <div className="bg-[#0b0816]/90 border border-white/5 rounded-3xl p-5 grid grid-cols-1 md:grid-cols-2 gap-6 shadow-md text-left">
+                {/* Inline Category Creator */}
+                <form onSubmit={handleCreateCategory} className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--accent-soft)]">Create Fresh Master Category</label>
+                  <div className="flex gap-2">
+                    <input type="text" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} disabled={isCreatingMeta} className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., Performance Automation" required />
+                    <button type="submit" disabled={isCreatingMeta} className="meta-inline-btn px-4 py-2 bg-white/5 border border-white/10 hover:border-[var(--accent-soft)] rounded-xl text-xs font-bold text-white whitespace-nowrap transition-all">
+                      + Add Cat
+                    </button>
+                  </div>
+                </form>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Content Master Title</label>
-                  <input type="text" value={formData.title} onChange={handleTitleChange} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., Tactical Local SEO Implementation Blueprints" required />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Target URL Slug Address Prefix</label>
-                  <input type="text" value={formData.slug} className="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-3 text-sm text-neutral-400 font-mono outline-none cursor-not-allowed" placeholder="auto-generated-slug-path" readOnly />
-                </div>
+                {/* Inline Tag Creator */}
+                <form onSubmit={handleCreateTag} className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--accent-soft)]">Create Fresh Structural Tag</label>
+                  <div className="flex gap-2">
+                    <input type="text" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} disabled={isCreatingMeta} className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., LeadGen" required />
+                    <button type="submit" disabled={isCreatingMeta} className="meta-inline-btn px-4 py-2 bg-white/5 border border-white/10 hover:border-[var(--accent-soft)] rounded-xl text-xs font-bold text-white whitespace-nowrap transition-all">
+                      + Add Tag
+                    </button>
+                  </div>
+                </form>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Assign Core Category Hub</label>
-                  <select value={formData.categoryId} onChange={(e) => setFormData(p => ({ ...p, categoryId: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required>
-                    <option value="">-- Choose Vertical Area Hub --</option>
-                    {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Target Strategy Focus Keyword</label>
-                  <input type="text" value={formData.focusKeyword} onChange={(e) => setFormData(p => ({ ...p, focusKeyword: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., SEO Tips Kottakkal" required />
-                </div>
-              </div>
-
-              {/* RELATIONAL TAG LINKAGE MULTI-SELECT BOX GRIDS */}
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Map Relational Structural Tags Index</label>
-                <div className="flex flex-wrap gap-2 bg-black/20 p-3 rounded-2xl border border-white/5">
-                  {availableTags.map(tag => {
-                    const isActive = selectedTags.includes(tag.id);
-                    return (
-                      <button type="button" key={tag.id} onClick={() => toggleTagSelection(tag.id)} className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-[var(--accent)] text-white border border-[var(--accent-soft)] shadow-md' : 'bg-white/5 text-neutral-400 border border-white/5 hover:border-white/10'}`}>
-                        {isActive ? `✓ ${tag.name}` : `+ ${tag.name}`}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* WebP DIMENSIONAL FILTER INTERACTIVE ASSIGNMENT FIELD */}
-              <div className="p-5 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3">Featured Landing Image (Mandatory: Strict WebP format | Min: 1200×630px)</label>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <input type="file" accept=".webp" onChange={handleImageUpload} className="text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent)] file:text-white" />
-                  {uploadStatus && <span className="text-xs text-[var(--accent-soft)] font-medium font-mono">{uploadStatus}</span>}
-                </div>
+              {/* MAIN CONTENT COMPOSER FRAME */}
+              <form onSubmit={handleSubmit} className="bg-[#07040f]/80 border border-white/5 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-xl text-left">
                 
-                {/* FIXED UX VISUALS: IMMEDIATE RETRIEVAL PREVIEW BOX NODE FRAME */}
-                {formData.featuredImage && (
-                  <div className="mt-4 p-2 bg-black/40 border border-white/10 rounded-xl max-w-sm">
-                    <span className="text-[9px] uppercase font-bold tracking-wider text-green-400 mb-2 block">✓ Active Upload Source Asset Preview ({formData.imgWidth}×{formData.imgHeight}px)</span>
-                    <img src={formData.featuredImage} alt="Live active input preview asset node instance source tracking" className="w-full aspect-[21/9] object-cover rounded-lg border border-white/5 shadow-inner" />
+                {seoWarnings.length > 0 && (
+                  <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl space-y-1">
+                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block">⚠️ Search Engine Compliance Optimization Tips:</span>
+                    <ul className="list-disc pl-5 space-y-1 text-[11px] text-amber-200/70 font-light">
+                      {seoWarnings.slice(0, 3).map((warn, i) => <li key={i}>{warn}</li>)}
+                    </ul>
                   </div>
                 )}
-              </div>
 
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Media Alt Validation Text</label>
-                <input type="text" value={formData.altText} onChange={(e) => setFormData(p => ({ ...p, altText: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="Provide accurate alternate descriptive parameters..." required />
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Content Master Title</label>
+                    <input type="text" value={formData.title} onChange={handleTitleChange} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., Tactical Local SEO Implementation Blueprints" required />
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                    <span>Meta Title Index</span>
-                    <span className={formData.metaTitle.length >= 50 && formData.metaTitle.length <= 60 ? 'text-green-400' : 'text-amber-400'}>{formData.metaTitle.length}/60</span>
-                  </label>
-                  <input type="text" value={formData.metaTitle} onChange={(e) => setFormData(p => ({ ...p, metaTitle: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required />
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Target URL Slug Address Prefix</label>
+                    <input type="text" value={formData.slug} className="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-3 text-sm text-neutral-400 font-mono outline-none cursor-not-allowed" placeholder="auto-generated-slug-path" readOnly />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Assign Core Category Hub</label>
+                    <select value={formData.categoryId} onChange={(e) => setFormData(p => ({ ...p, categoryId: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required>
+                      <option value="">-- Choose Vertical Area Hub --</option>
+                      {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Target Strategy Focus Keyword</label>
+                    <input type="text" value={formData.focusKeyword} onChange={(e) => setFormData(p => ({ ...p, focusKeyword: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., SEO Tips Kottakkal" required />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                    <span>Meta Description Index</span>
-                    <span className={formData.metaDescription.length >= 130 && formData.metaDescription.length <= 160 ? 'text-green-400' : 'text-amber-400'}>{formData.metaDescription.length}/160</span>
-                  </label>
-                  <input type="text" value={formData.metaDescription} onChange={(e) => setFormData(p => ({ ...p, metaDescription: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Article Brief Excerpt Summary</label>
-                <textarea value={formData.excerpt} onChange={(e) => setFormData(p => ({ ...p, excerpt: e.target.value }))} rows={2} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none resize-none" placeholder="Summary snippet for main listings card layout blocks..." required />
-              </div>
-
-              {/* WORD PROCESSING SELECTION TRACKING ENGINE TRAY */}
-              <div className="flex flex-col border border-white/10 rounded-2xl overflow-hidden bg-black/20">
-                <div className="editor-toolbar flex flex-wrap items-center gap-1 p-2 bg-neutral-900/90 border-b border-white/10">
-                  <button type="button" onClick={() => handleToolbarFormat('h2')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[H2]</button>
-                  <button type="button" onClick={() => handleToolbarFormat('h3')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[H3]</button>
-                  <button type="button" onClick={() => handleToolbarFormat('p')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[P]</button>
-                  <div className="w-px h-5 bg-white/10 mx-1"></div>
-                  <button type="button" onClick={() => { document.execCommand('bold'); }} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all"><i className="fas fa-bold"></i></button>
-                  <button type="button" onClick={() => { document.execCommand('italic'); }} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs italic text-white transition-all"><i className="fas fa-italic"></i></button>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Map Relational Structural Tags Index</label>
+                  <div className="flex flex-wrap gap-2 bg-black/20 p-3 rounded-2xl border border-white/5">
+                    {availableTags.map(tag => {
+                      const isActive = selectedTags.includes(tag.id);
+                      return (
+                        <button type="button" key={tag.id} onClick={() => toggleTagSelection(tag.id)} className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-[var(--accent)] text-white border border-[var(--accent-soft)] shadow-md' : 'bg-white/5 text-neutral-400 border border-white/5 hover:border-white/10'}`}>
+                          {isActive ? `✓ ${tag.name}` : `+ ${tag.name}`}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div 
-                  ref={editorRef}
-                  contentEditable={true}
-                  onInput={() => setFormData(prev => ({ ...prev, content: editorRef.current.innerHTML }))}
-                  className="w-full min-h-[350px] max-h-[600px] overflow-y-auto p-4 bg-black/40 text-sm text-neutral-200 outline-none focus:ring-1 focus:ring-[var(--accent-soft)] blog-rich-surface font-sans leading-relaxed text-left"
-                  placeholder="Type natively. Highlight text streams to bind top styles matrix anchors smoothly..."
-                  style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
-                />
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/5">
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
-                    <input type="radio" name="status" value="draft" checked={formData.status === 'draft'} onChange={() => setFormData(p => ({ ...p, status: 'draft' }))} className="accent-[var(--accent)]" /> Keep Draft
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
-                    <input type="radio" name="status" value="published" checked={formData.status === 'published'} onChange={() => setFormData(p => ({ ...p, status: 'published' }))} className="accent-[var(--accent)]" /> Publish Live
-                  </label>
+                <div className="p-5 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3">Featured Landing Image (Mandatory: Strict WebP format | Min: 1200×630px)</label>
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <input type="file" accept=".webp" onChange={handleImageUpload} className="text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent)] file:text-white" />
+                    {uploadStatus && <span className="text-xs text-[var(--accent-soft)] font-medium font-mono">{uploadStatus}</span>}
+                  </div>
+                  
+                  {formData.featuredImage && (
+                    <div className="mt-4 p-2 bg-black/40 border border-white/10 rounded-xl max-w-sm">
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-green-400 mb-2 block">✓ Active Upload Source Asset Preview ({formData.imgWidth}×{formData.imgHeight}px)</span>
+                      <img src={formData.featuredImage} alt="Live active input preview asset node instance source tracking" className="w-full aspect-[21/9] object-cover rounded-lg border border-white/5 shadow-inner" />
+                    </div>
+                  )}
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="btn btn-primary text-xs uppercase tracking-wider font-bold px-8 py-3 disabled:opacity-50">
-                  {isSubmitting ? 'Syncing Tables...' : 'Execute Data Injection'}
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Media Alt Validation Text</label>
+                  <input type="text" value={formData.altText} onChange={(e) => setFormData(p => ({ ...p, altText: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="Provide accurate alternate descriptive parameters..." required />
+                </div>
 
-            {/* RIGHT COLUMN: HIGH-FIDELITY LIVE RECONSTRUCT PREVIEW CANVAS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                      <span>Meta Title Index</span>
+                      <span className={formData.metaTitle.length >= 50 && formData.metaTitle.length <= 60 ? 'text-green-400' : 'text-amber-400'}>{formData.metaTitle.length}/60</span>
+                    </label>
+                    <input type="text" value={formData.metaTitle} onChange={(e) => setFormData(p => ({ ...p, metaTitle: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required />
+                  </div>
+
+                  <div>
+                    <label className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                      <span>Meta Description Index</span>
+                      <span className={formData.metaDescription.length >= 130 && formData.metaDescription.length <= 160 ? 'text-green-400' : 'text-amber-400'}>{formData.metaDescription.length}/160</span>
+                    </label>
+                    <input type="text" value={formData.metaDescription} onChange={(e) => setFormData(p => ({ ...p, metaDescription: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Article Brief Excerpt Summary</label>
+                  <textarea value={formData.excerpt} onChange={(e) => setFormData(p => ({ ...p, excerpt: e.target.value }))} rows={2} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none resize-none" placeholder="Summary snippet for main listings card layout blocks..." required />
+                </div>
+
+                <div className="flex flex-col border border-white/10 rounded-2xl overflow-hidden bg-black/20">
+                  <div className="editor-toolbar flex flex-wrap items-center gap-1 p-2 bg-neutral-900/90 border-b border-white/10">
+                    <button type="button" onClick={() => handleToolbarFormat('h2')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[H2]</button>
+                    <button type="button" onClick={() => handleToolbarFormat('h3')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[H3]</button>
+                    <button type="button" onClick={() => handleToolbarFormat('p')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[P]</button>
+                    <div className="w-px h-5 bg-white/10 mx-1"></div>
+                    <button type="button" onClick={() => { document.execCommand('bold'); }} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all"><i className="fas fa-bold"></i></button>
+                    <button type="button" onClick={() => { document.execCommand('italic'); }} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs italic text-white transition-all"><i className="fas fa-italic"></i></button>
+                  </div>
+
+                  <div 
+                    ref={editorRef}
+                    contentEditable={true}
+                    onInput={() => setFormData(prev => ({ ...prev, content: editorRef.current.innerHTML }))}
+                    className="w-full min-h-[350px] max-h-[600px] overflow-y-auto p-4 bg-black/40 text-sm text-neutral-200 outline-none focus:ring-1 focus:ring-[var(--accent-soft)] blog-rich-surface font-sans leading-relaxed text-left"
+                    placeholder="Type natively. Highlight text streams to bind top styles matrix anchors smoothly..."
+                    style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/5">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
+                      <input type="radio" name="status" value="draft" checked={formData.status === 'draft'} onChange={() => setFormData(p => ({ ...p, status: 'draft' }))} className="accent-[var(--accent)]" /> Keep Draft
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
+                      <input type="radio" name="status" value="published" checked={formData.status === 'published'} onChange={() => setFormData(p => ({ ...p, status: 'published' }))} className="accent-[var(--accent)]" /> Publish Live
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {editingPostId && (
+                      <button type="button" onClick={() => {
+                        setEditingPostId(null);
+                        if (editorRef.current) editorRef.current.innerHTML = '';
+                        setSelectedTags([]);
+                        setFormData({
+                          title: '', slug: '', excerpt: '', content: '', focusKeyword: '',
+                          metaTitle: '', metaDescription: '', altText: '', authorName: 'EnMate Team',
+                          categoryId: '', status: 'draft', featuredImage: '', imgWidth: 0, imgHeight: 0
+                        });
+                      }} className="btn btn-outline text-xs uppercase tracking-wider font-bold px-5 py-3">
+                        Cancel Edit
+                      </button>
+                    )}
+                    <button type="submit" disabled={isSubmitting} className="btn btn-primary text-xs uppercase tracking-wider font-bold px-8 py-3 disabled:opacity-50">
+                      {isSubmitting ? 'Syncing Tables...' : editingPostId ? 'Apply Update Record' : 'Execute Data Injection'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* RIGHT COLUMN: CANVAS PREVIEW RENDERING */}
             <aside className="xl:col-span-5 bg-[#040208]/90 border border-white/5 rounded-3xl p-6 lg:p-8 lg:sticky lg:top-24 h-auto max-h-[85vh] overflow-y-auto shadow-2xl text-left hidden xl:block">
               <span className="text-[10px] font-bold text-[var(--accent-soft)] uppercase tracking-widest block mb-4 border-b border-white/5 pb-2">✨ Live Workspace Canvas Preview Rendering</span>
               
@@ -534,8 +725,72 @@ export default function NextGenProductionAdminBlog() {
                 </div>
               )}
             </aside>
-
           </div>
+
+          {/* ACTIVE PUBLICATIONS REGISTRY REGISTERS */}
+          <section className="bg-[#07040f]/80 border border-white/5 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl text-left backdrop-blur-xl">
+            <div>
+              <span className="section-tag">Database Content Records</span>
+              <h2 className="text-xl md:text-2xl font-bold font-anokha text-white">Active Publications Registry</h2>
+            </div>
+
+            <div className="overflow-x-auto w-full border border-white/5 rounded-2xl bg-black/20">
+              <table className="w-full text-xs md:text-sm text-neutral-300">
+                <thead className="text-[10px] uppercase tracking-wider bg-neutral-900/50 text-[var(--text-muted)] font-bold border-b border-white/5">
+                  <tr>
+                    <th scope="col" className="px-6 py-4">Article Title Context</th>
+                    <th scope="col" className="px-6 py-4">Assigned Category</th>
+                    <th scope="col" className="px-6 py-4">URL Slug Path</th>
+                    <th scope="col" className="px-6 py-4 text-center">Lifecycle Status</th>
+                    <th scope="col" className="px-6 py-4 text-right">Administrative Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-light">
+                  {adminPosts.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-8 font-mono text-xs text-neutral-500 italic">
+                        No articles detected inside database index rows.
+                      </td>
+                    </tr>
+                  ) : (
+                    adminPosts.map((post) => (
+                      <tr key={post.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-6 py-4 font-medium text-white max-w-sm truncate">{post.title}</td>
+                        <td className="px-6 py-4 text-[var(--text-muted)]">
+                          {categories.find(c => c.id === post.category_id)?.name || 'Unassigned'}
+                        </td>
+                        <td className="px-6 py-4 font-mono text-[11px] text-neutral-400">{post.slug}</td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${post.status === 'published' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                            {post.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button 
+                              type="button" 
+                              onClick={() => loadPostToWorkspace(post.id)}
+                              className="action-row-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-[var(--accent)] hover:border-[var(--accent-soft)] transition-all font-medium text-[11px]"
+                            >
+                              Edit Profile
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={() => executeDataPurgeWorkflow(post)}
+                              className="action-row-btn px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all font-medium text-[11px]"
+                            >
+                              Purge Row
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
         </div>
       </div>
     </>
