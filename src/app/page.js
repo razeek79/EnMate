@@ -96,8 +96,6 @@ export default function HomePage() {
   return (
     <div className="w-full bg-cover bg-fixed bg-center bg-no-repeat bg-[url('/images/bg-images/home-mobile-bg.webp')] md:bg-[url('/images/bg-images/home-lap-bg.webp')] font-sans selection:bg-[var(--accent)] selection:text-white">
       <div className="w-full bg-gradient-to-b from-[#05030a]/55 via-[#05030a]/50 to-[#0b0410]/65">
-        
-        {/* 🧼 CLEANED UP DUPLICATE EVENT CURSOR DIV NODES FOR PERFORMANCE 🧼 */}
 
         <main>
           {/* Hero Section */}
@@ -178,21 +176,22 @@ export default function HomePage() {
           {/* Execution Framework */}
           <section id="process" className="process-advanced py-16">
             <div className="container">
-              <div className="process-wrapper reveal-on-scroll text-left grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="process-wrapper reveal-on-scroll text-left grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                 <div className="process-left lg:col-span-4 space-y-1">
                   <span className="section-tag font-mono text-[10px]">How We Execute</span>
                   <h2 className="text-xl md:text-3xl font-bold text-white tracking-tight">Our 3-Step Execution Framework</h2>
                 </div>
-                <div className="process-right lg:col-span-8 space-y-6">
-                  <div className="process-step border-l border-white/10 pl-6 space-y-1">
+                {/* FIXED: Added grid or flex layout forcing uniform height rendering on desktop tiers */}
+                <div className="process-right lg:col-span-8 flex flex-col md:grid md:grid-cols-3 gap-6 md:space-y-0">
+                  <div className="process-step border-l border-white/10 pl-6 space-y-1 h-full flex flex-col justify-start">
                     <span className="text-xs font-mono font-bold text-[var(--accent-soft)] tracking-wider block">01 / STRATEGY</span>
                     <p className="text-xs md:text-sm text-[var(--text-muted)] font-light leading-relaxed">Deep tactical market research, audience search intent mapping, and high-converting structural target layouts before typing a line of code.</p>
                   </div>
-                  <div className="process-step border-l border-white/10 pl-6 space-y-1">
+                  <div className="process-step border-l border-white/10 pl-6 space-y-1 h-full flex flex-col justify-start">
                     <span className="text-xs font-mono font-bold text-[var(--accent-soft)] tracking-wider block">02 / DESIGN</span>
                     <p className="text-xs md:text-sm text-[var(--text-muted)] font-light leading-relaxed">Crafting custom premium visuals, fast response interfaces, and high-performance system dashboards structured cleanly for absolute growth optimization.</p>
                   </div>
-                  <div className="process-step border-l border-white/10 pl-6 space-y-1">
+                  <div className="process-step border-l border-white/10 pl-6 space-y-1 h-full flex flex-col justify-start">
                     <span className="text-xs font-mono font-bold text-[var(--accent-soft)] tracking-wider block">03 / GROWTH</span>
                     <p className="text-xs md:text-sm text-[var(--text-muted)] font-light leading-relaxed">Deploying automated data tracking metrics, rigorous SEO search engine visibility indexing layers, and scalable ad campaign matrices to lock in market authority.</p>
                   </div>

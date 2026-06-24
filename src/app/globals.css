@@ -246,7 +246,7 @@ h2.section-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; marg
 .hero { padding: 130px 0 60px; text-align: center; position: relative; }
 .badge { background: var(--badge-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--badge-border); color: var(--accent-soft); padding: 6px 16px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; margin-bottom: 1.2rem; display: inline-block; tracking-wide: 1px; }
 .hero-subtitle { font-size: 1.1rem; font-weight: 600; color: var(--accent-soft); margin: 0.8rem 0; letter-spacing: 0.5px; }
-.hero-description { font-size: 0.95rem; color: var(--text-muted); max-w: 700px; margin: 0 auto 2.2rem; line-height: 1.65; }
+.hero-description { font-size: 0.95rem; color: var(--text-muted); max-w: 700px; margin: 0 auto 2.2rem; line-height: 1.65; font-weight: 400;}
 .hero-btns { display: flex; flex-direction: row; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: center; width: 100%; }
 .hero-light { font-size: clamp(1.6rem, 5vw, 3.2rem); font-weight: 500; color: var(--text-muted); margin-bottom: 15px; line-height: 1.25; display: block; }
 

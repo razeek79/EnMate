@@ -1,7 +1,7 @@
 import localFont from 'next/font/local';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import WholeCursor from '../components/WholeCursor'; // Imported globally to ensure seamless persistence
+import WholeCursor from '../components/WholeCursor'; 
 import './globals.css';
 
 const anokhaFont = localFont({
@@ -14,7 +14,11 @@ export const metadata = {
   title: 'EnMate Digital Marketing Agency | Based in Kottakkal, Serving Worldwide',
   description: 'EnMate is a premium digital marketing agency based in Kottakkal, Kerala, India, serving clients locally & worldwide. We specialize in custom web architecture, visual branding identity layouts, and global customer acquisition funnels.',
   alternates: {
-    canonical: 'https://enmate.in',
+    canonical: 'https://www.enmate.in',
+  },
+  // 🔍 GOOGLE ACCORDION ACCEPTS META KEYS DIRECTLY HERE
+  verification: {
+    google: 'aINPp6RgBJ0lMGuTU4JL70iCTkdnZZBlky7nQmGMjaQ',
   },
   icons: {
     icon: [
@@ -39,7 +43,6 @@ export default function RootLayout({ children }) {
       </head>
       <body className="bg-[#05030a] text-[var(--text-main)] antialiased min-h-screen flex flex-col justify-between">
         
-        {/* Isolated at root level so the custom cursor states track uninterrupted across all page paths */}
         <WholeCursor />
 
         <Navbar />
