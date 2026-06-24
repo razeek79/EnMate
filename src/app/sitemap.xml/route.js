@@ -1,12 +1,17 @@
-export async function GET() {
-  const baseUrl = 'https://enmate.in';
+import { supabase } from '../../lib/supabase';
 
+export async function GET() {
+  const baseUrl = 'https://www.enmate.in';
+
+  // Core Static Framework Pages (FIXED: Added hyphens)
   const staticPages = [
     { url: '', priority: '1.0', changefreq: 'weekly' },
     { url: '/about', priority: '0.8', changefreq: 'monthly' },
     { url: '/blog', priority: '0.8', changefreq: 'weekly' },
+    { url: '/tools/website-cost-calculator', priority: '0.9', changefreq: 'monthly' },
   ];
 
+  // Core Service Matrix Offerings (FIXED: Added hyphen to video-editing)
   const servicePages = [
     'web-development',
     'graphic-design',
@@ -19,7 +24,26 @@ export async function GET() {
     changefreq: 'monthly',
   }));
 
-  const allPages = [...staticPages, ...servicePages];
+  // Fetch all live database articles dynamically from Supabase
+  let dynamicBlogPages = [];
+  try {
+    const { data: posts } = await supabase
+      .from('blogs')
+      .select('slug')
+      .eq('status', 'published');
+
+    if (posts) {
+      dynamicBlogPages = posts.map((post) => ({
+        url: `/blog/${post.slug}`,
+        priority: '0.7',
+        changefreq: 'weekly',
+      }));
+    }
+  } catch (err) {
+    console.error('Sitemap live stream database fetch failed:', err);
+  }
+
+  const allPages = [...staticPages, ...servicePages, ...dynamicBlogPages];
 
   const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

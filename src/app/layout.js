@@ -1,4 +1,7 @@
 import localFont from 'next/font/local';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import WholeCursor from '../components/WholeCursor'; // Imported globally to ensure seamless persistence
 import './globals.css';
 
 const anokhaFont = localFont({
@@ -7,7 +10,6 @@ const anokhaFont = localFont({
   display: 'swap',
 });
 
-// Elite SEO Metadata Configuration with complete device icon mapping
 export const metadata = {
   title: 'EnMate Digital Marketing Agency | Based in Kottakkal, Serving Worldwide',
   description: 'EnMate is a premium digital marketing agency based in Kottakkal, Kerala, India, serving clients locally & worldwide. We specialize in custom web architecture, visual branding identity layouts, and global customer acquisition funnels.',
@@ -34,36 +36,20 @@ export default function RootLayout({ children }) {
           rel="stylesheet" 
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" 
         />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "DigitalMarketingAgency",
-              "name": "EnMate Digital Marketing Agency",
-              "url": "https://enmate.in",
-              "logo": "https://enmate.in/logos/site-logo.png",
-              "email": "enmate.digital@gmail.com",
-              "telephone": "+918138881132",
-              "description": "Based in Kottakkal, Kerala, India, serving clients locally & worldwide with premium web engineering and conversion-driven performance marketing strategies.",
-              "address": {
-                "@type": "PostalAddress",
-                "addressLocality": "Kottakkal",
-                "addressRegion": "Kerala",
-                "addressCountry": "IN"
-              },
-              "areaServed": [
-                { "@type": "AdministrativeArea", "name": "Kottakkal" },
-                { "@type": "AdministrativeArea", "name": "Kerala" },
-                { "@type": "AdministrativeArea", "name": "India" },
-                { "@type": "Country", "name": "Worldwide" }
-              ]
-            })
-          }}
-        />
       </head>
-      <body>
-        {children}
+      <body className="bg-[#05030a] text-[var(--text-main)] antialiased min-h-screen flex flex-col justify-between">
+        
+        {/* Isolated at root level so the custom cursor states track uninterrupted across all page paths */}
+        <WholeCursor />
+
+        <Navbar />
+
+        <div className="flex-grow">
+          {children}
+        </div>
+
+        <Footer />
+
       </body>
     </html>
   );

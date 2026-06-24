@@ -2,11 +2,11 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import ServicesGrid from '@/components/ServicesGrid';
 
 export default function AboutPage() {
-  const whatsappUrl = "https://wa.me/917510514464?text=Hi%20👋,%20I%20read%20the%20EnMate%20organization%20profile.%20I%20want%20to%20partner%20with%20your%20team.";
+  const whatsappUrl = "https://wa.me/918138881132?text=Hi%20👋,%20I%20read%20the%20EnMate%20organization%20profile.%20I%20want%20to%20partner%20with%20your%20team.";
 
+  // 1. LIGHTWEIGHT COORDINATES STREAM FOR SPOTLIGHT CARDS HOVER 
   useEffect(() => {
     const handleMouseMove = (e) => {
       const cards = document.querySelectorAll('.team-card, .value-card');
@@ -19,45 +19,11 @@ export default function AboutPage() {
       });
     };
 
-    const dot = document.getElementById('cursor-dot');
-    const ring = document.getElementById('cursor-ring');
-    if (!dot || !ring) return;
-
-    let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
-
-    const onMouseMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      dot.style.left = `${mouseX}px`;
-      dot.style.top = `${mouseY}px`;
-      handleMouseMove(e);
-    };
-
-    const tick = () => {
-      ringX += (mouseX - ringX) * 0.12;
-      ringY += (mouseY - ringY) * 0.12;
-      ring.style.left = `${ringX}px`;
-      ring.style.top = `${ringY}px`;
-      requestAnimationFrame(tick);
-    };
-
-    const onMouseEnterLink = () => ring.classList.add('cursor-hovered');
-    const onMouseLeaveLink = () => ring.classList.remove('cursor-hovered');
-
-    window.addEventListener('mousemove', onMouseMove);
-    const animId = requestAnimationFrame(tick);
-
-    document.querySelectorAll('a, button, .team-card, .value-card, .btn').forEach(item => {
-      item.addEventListener('mouseenter', onMouseEnterLink);
-      item.addEventListener('mouseleave', onMouseLeaveLink);
-    });
-
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      cancelAnimationFrame(animId);
-    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // 2. SCROLL INTERSECTION OBSERVER REVEAL LOGIC
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -77,24 +43,21 @@ export default function AboutPage() {
   }, []);
 
   return (
-    <div className="min-h-screen w-full bg-[#05030a] text-[var(--text-main)] overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[#05030a] text-[var(--text-main)] font-sans overflow-x-hidden selection:bg-[var(--accent)] selection:text-white">
       
-      <div id="cursor-dot" className="custom-cursor-dot" />
-      <div id="cursor-ring" className="custom-cursor-ring" />
-      <div className="hidden"><ServicesGrid serviceList={[]} /></div>
-
       {/* ─── COMPACT HERO MANIFESTO ─── */}
       <header className="relative pt-32 pb-12 md:pt-40 md:pb-16 bg-gradient-to-b from-[#090514] to-[#05030a] border-b border-white/5 overflow-hidden">
-        {/* Ambient background watermark, matches process-section style */}
-        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[16vw] font-extrabold text-white/[0.015] pointer-events-none select-none whitespace-nowrap">
+        {/* Ambient background watermark */}
+        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[16vw] font-extrabold text-white/[0.05] pointer-events-none select-none tracking-widest">
           ENMATE
         </span>
+        
         <div className="container max-w-[1100px] text-left space-y-4 relative z-10">
           <span className="section-tag badge inline-block reveal-on-scroll">Corporate Profile</span>
           <h1 className="text-3xl md:text-5xl font-bold font-anokha leading-tight tracking-tight max-w-[850px] reveal-on-scroll">
             <span className="hero-accent-word">Engineered Assets</span> for Market Dominance
           </h1>
-          <p className="text-sm md:text-base text-[var(--text-muted)] max-w-[700px] leading-relaxed font-light reveal-on-scroll">
+          <p className="text-xs md:text-sm text-[var(--text-muted)] max-w-[700px] leading-relaxed font-light reveal-on-scroll">
             EnMate bridges localized authority in Kottakkal, Kerala with high-performance worldwide digital marketing operations. We write 100% custom-coded conversion funnels and visibility frameworks.
           </p>
         </div>
@@ -106,9 +69,9 @@ export default function AboutPage() {
         <section className="py-12 md:py-16">
           <div className="container max-w-[1100px]">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              <div className="lg:col-span-4 text-left space-y-2 reveal-on-scroll">
-                <span className="text-xs font-mono font-bold tracking-widest text-[var(--accent-soft)] uppercase about-tag-line">Origin Matrix</span>
-                <h2 className="text-xl md:text-2xl font-bold font-anokha text-white">Why EnMate Exist</h2>
+              <div className="lg:col-span-4 text-left space-y-1 reveal-on-scroll">
+                <span className="text-[10px] font-mono font-bold tracking-widest text-[var(--accent-soft)] uppercase about-tag-line">Origin Matrix</span>
+                <h2 className="text-lg md:text-2xl font-bold text-white tracking-tight">Why EnMate Exists</h2>
               </div>
               <div className="lg:col-span-8 text-left space-y-4 text-xs md:text-sm text-[var(--text-muted)] font-light leading-relaxed reveal-on-scroll">
                 <p>
@@ -127,16 +90,16 @@ export default function AboutPage() {
           <div className="container max-w-[1100px]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <div className="value-card p-6 bg-[#07040f]/60 border border-white/5 rounded-xl text-left space-y-2 reveal-on-scroll about-stagger-1">
-                <span className="text-[10px] font-mono font-bold tracking-wider text-[var(--accent-soft)] uppercase about-tag-line">Sustained Vector</span>
-                <h3 className="text-lg font-bold text-white">Our Mission</h3>
+                <span className="text-[9px] font-mono font-bold tracking-wider text-[var(--accent-soft)] uppercase about-tag-line">Sustained Vector</span>
+                <h3 className="text-base font-bold text-white tracking-tight">Our Mission</h3>
                 <p className="text-xs md:text-sm text-[var(--text-muted)] leading-relaxed font-light">
                   Transforming ambitious brands into absolute market leaders through rigorous optimization, clean framework execution, and elite visual branding layouts built to scale operations globally.
                 </p>
               </div>
 
               <div className="value-card p-6 bg-[#07040f]/60 border border-white/5 rounded-xl text-left space-y-2 reveal-on-scroll about-stagger-2">
-                <span className="text-[10px] font-mono font-bold tracking-wider text-[var(--accent-soft)] uppercase about-tag-line">Target Horizon</span>
-                <h3 className="text-lg font-bold text-white">Our Vision</h3>
+                <span className="text-[9px] font-mono font-bold tracking-wider text-[var(--accent-soft)] uppercase about-tag-line">Target Horizon</span>
+                <h3 className="text-base font-bold text-white tracking-tight">Our Vision</h3>
                 <p className="text-xs md:text-sm text-[var(--text-muted)] leading-relaxed font-light">
                   Setting the global performance benchmark for custom software solutions—where technical, high-speed development structures perfectly match robust customer acquisition matrices.
                 </p>
@@ -150,11 +113,11 @@ export default function AboutPage() {
           <div className="container max-w-[1100px]">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               <div className="lg:col-span-4 text-left reveal-on-scroll">
-                <span className="text-xs font-mono font-bold tracking-widest text-[var(--accent-soft)] uppercase about-tag-line">Leadership Focus</span>
-                <h2 className="text-xl md:text-2xl font-bold font-anokha text-white mt-1">Founder's Story</h2>
+                <span className="text-[10px] font-mono font-bold tracking-widest text-[var(--accent-soft)] uppercase about-tag-line">Leadership Focus</span>
+                <h2 className="text-lg md:text-2xl font-bold text-white mt-1 tracking-tight">Founder's Story</h2>
               </div>
               <div className="lg:col-span-8 text-left space-y-3 text-xs md:text-sm text-[var(--text-muted)] font-light leading-relaxed reveal-on-scroll">
-                <h4 className="text-base font-bold text-white font-mono text-[var(--accent-soft)] founder-quote py-1">
+                <h4 className="text-sm md:text-base font-bold text-white font-mono text-[var(--accent-soft)] founder-quote py-1">
                   "Code and design must function as a single lethal acquisition weapon."
                 </h4>
                 <p>
@@ -179,7 +142,7 @@ export default function AboutPage() {
           <div className="container max-w-[1100px] space-y-8">
             <div className="text-left reveal-on-scroll">
               <span className="section-tag">Strategic Core</span>
-              <h2 className="text-xl md:text-2xl font-bold font-anokha text-white">Values & Approach</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">Values & Approach</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -210,7 +173,7 @@ export default function AboutPage() {
           <div className="container max-w-[1100px] space-y-8">
             <div className="text-left reveal-on-scroll">
               <span className="section-tag">The Operators</span>
-              <h2 className="text-xl md:text-2xl font-bold font-anokha text-white">The EnMate Intelligence Desk</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">The EnMate Intelligence Desk</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -276,17 +239,21 @@ export default function AboutPage() {
           <div className="container max-w-[1100px]">
             <div className="cta-glow-card p-6 md:p-12 bg-gradient-to-br from-[#07040f] via-[#cf0466]/5 to-[#07040f] border border-white/10 rounded-2xl text-center space-y-4 shadow-xl relative overflow-hidden reveal-on-scroll">
               <div className="relative z-10 space-y-3 max-w-[650px] mx-auto">
-                <span className="section-tag !mb-0">Scale Your Framework</span>
+                <span className="section-tag !mb-0 font-mono text-[10px]">Scale Your Framework</span>
                 <h2 className="text-xl md:text-3xl font-bold font-anokha text-white">Let's Build Something Powerful</h2>
                 <p className="text-xs md:text-sm text-[var(--text-muted)] font-light leading-relaxed">
                   Connect directly with our strategy and core development desks to transform your operational blueprints into high-converting digital assets.
                 </p>
                 <div className="pt-2 flex flex-wrap gap-3 justify-center">
-                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn btn-accent text-xs uppercase tracking-wider font-bold py-3 px-6 shadow-md">
-                    Initiate Consultation
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn btn-accent text-xs uppercase tracking-wider font-bold">
+                    <div className="btn-glow-layer" />
+                    <span className="btn-content-nodes">Initiate Consultation</span>
                   </a>
-                  <Link href="/services" className="btn btn-outline text-xs uppercase tracking-wider font-bold py-3 px-6">
-                    Review Capabilities Layer
+                  <Link href="/services" className="btn btn-outline text-xs uppercase tracking-wider font-bold">
+                    <div className="btn-glow-layer" />
+                    <span className="btn-content-nodes inline-flex items-center gap-1.5">
+                      Review Capabilities Layer <i className="fas fa-arrow-right text-[10px] text-[var(--accent-soft)]" />
+                    </span>
                   </Link>
                 </div>
               </div>

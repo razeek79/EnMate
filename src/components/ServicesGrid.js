@@ -5,129 +5,90 @@ import Link from 'next/link';
 
 export default function ServicesGrid({ serviceList }) {
   
-  // 1. DYNAMIC MOUSE-TRACKING ACCENT GLOW + 3D TILT CONTROLLER
+  // HARDWARE-ACCELERATED MOUSE GLOW + MAXIMUM RESPONSIVE 3D TILT
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      const cards = document.querySelectorAll('.service-card');
-      cards.forEach(card => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        card.style.setProperty('--mouse-x', `${x}px`);
-        card.style.setProperty('--mouse-y', `${y}px`);
+    const cards = document.querySelectorAll('.service-grid-card-target');
 
-        // ─── 3D TILT (Option A) Mirror Sync ───
-        const isInside = x >= 0 && x <= rect.width && y >= 0 && y <= rect.height;
-        if (isInside) {
-          const centerX = rect.width / 2;
-          const centerY = rect.height / 2;
-          const rotateX = ((y - centerY) / centerY) * -6;
-          const rotateY = ((x - centerX) / centerX) * 6;
-          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px) scale(1.01)`;
-        } else {
-          card.style.transform = '';
-        }
-      });
+    const handleCardMouseMove = (e) => {
+      const card = e.currentTarget;
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const percentX = (x / rect.width) - 0.5;
+      const percentY = (y / rect.height) - 0.5;
+
+      // Injects maximum 3D responsiveness arrays directly to GPU processors
+      card.style.setProperty('--tilt-x', `${percentY * -12}deg`);
+      card.style.setProperty('--tilt-y', `${percentX * 12}deg`);
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
     };
 
-    const dot = document.getElementById('cursor-dot');
-    const ring = document.getElementById('cursor-ring');
-    if (!dot || !ring) return;
-
-    let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
-
-    const onMouseMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      dot.style.left = `${mouseX}px`;
-      dot.style.top = `${mouseY}px`;
-      handleMouseMove(e);
+    const handleCardMouseLeave = (e) => {
+      const card = e.currentTarget;
+      card.style.setProperty('--tilt-x', '0deg');
+      card.style.setProperty('--tilt-y', '0deg');
     };
 
-    const tick = () => {
-      ringX += (mouseX - ringX) * 0.12;
-      ringY += (mouseY - ringY) * 0.12;
-      ring.style.left = `${ringX}px`;
-      ring.style.top = `${ringY}px`;
-      requestAnimationFrame(tick);
-    };
-
-    const onMouseEnterLink = () => ring.classList.add('cursor-hovered');
-    const onMouseLeaveLink = () => ring.classList.remove('cursor-hovered');
-
-    // Reset tilt cleanly when the mouse leaves a card
-    const onCardLeave = (e) => {
-      e.currentTarget.style.transform = '';
-    };
-
-    const addHoverListeners = () => {
-      document.querySelectorAll('a, button, .service-card, .btn').forEach(item => {
-        item.addEventListener('mouseenter', onMouseEnterLink);
-        item.addEventListener('mouseleave', onMouseLeaveLink);
-      });
-      document.querySelectorAll('.service-card').forEach(card => {
-        card.addEventListener('mouseleave', onCardLeave);
-      });
-    };
-
-    window.addEventListener('mousemove', onMouseMove);
-    const animId = requestAnimationFrame(tick);
-    addHoverListeners();
+    cards.forEach(card => {
+      card.addEventListener('mousemove', handleCardMouseMove);
+      card.addEventListener('mouseleave', handleCardMouseLeave);
+    });
 
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      cancelAnimationFrame(animId);
-      document.querySelectorAll('.service-card').forEach(card => {
-        card.removeEventListener('mouseleave', onCardLeave);
+      cards.forEach(card => {
+        card.removeEventListener('mousemove', handleCardMouseMove);
+        card.removeEventListener('mouseleave', handleCardMouseLeave);
       });
     };
   }, [serviceList]);
 
-  // 2. PREMIUM SCROLL REVEAL INTERSECTION CONTROLLER
+  // SCROLL REVEAL OBSERVERS
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible');
-        }
+        if (entry.isIntersecting) entry.target.classList.add('is-visible');
       });
-    }, { 
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    });
+    }, { threshold: 0.02, rootMargin: '0px 0px -20px 0px' });
 
-    const targets = document.querySelectorAll('.reveal-on-scroll');
-    targets.forEach(target => observer.observe(target));
-
+    document.querySelectorAll('.reveal-on-scroll').forEach(target => observer.observe(target));
     return () => observer.disconnect();
   }, [serviceList]);
 
   return (
-    <>
-      {/* Structural Cursor Nodes */}
-      <div id="cursor-dot" className="custom-cursor-dot" />
-      <div id="cursor-ring" className="custom-cursor-ring" />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-        {serviceList.map(([slug, service], i) => (
-          <Link
-            href={`/services/${slug}`}
-            key={slug}
-            className={`service-card reveal-on-scroll stagger-${(i % 3) + 1} block`}
-          >
-            {/* Added Option B Curtain Element */}
-            <div className="curtain-panel"></div>
-            <div className="card-content">
-              <div className="icon"><i className={service.icon}></i></div>
-              <h3>{service.title}</h3>
-              <p>{service.overview}</p>
-              <span className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-[var(--accent-soft)]">
-                Learn More <i className="fas fa-arrow-right text-xs"></i>
-              </span>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      {serviceList.map(([slug, service], i) => (
+        <Link
+          href={`/services/${slug}`}
+          key={slug}
+          className="service-grid-card-target tilt-grid-card reveal-on-scroll block relative overflow-hidden"
+          style={{
+            transform: 'perspective(1000px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(0)',
+          }}
+        >
+          <div className="curtain-panel" />
+          
+          <div className="card-content-wrapper p-6 md:p-8 space-y-4">
+            <div className="service-card-icon-node w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center transition-all duration-300">
+              <i className={`${service.icon} text-base text-[var(--accent-soft)]`} />
             </div>
-          </Link>
-        ))}
-      </div>
-    </>
+            
+            <div className="space-y-1.5">
+              <h3 className="text-base md:text-lg font-bold text-white group-hover:text-[var(--accent-soft)] transition-colors">
+                {service.title}
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed font-light line-clamp-3">
+                {service.overview}
+              </p>
+            </div>
+
+            <span className="inline-flex items-center gap-1.5 pt-1 text-xs font-bold text-[var(--accent-soft)] uppercase tracking-wider">
+              Learn More <i className="fas fa-arrow-right text-[10px]" />
+            </span>
+          </div>
+        </Link>
+      ))}
+    </div>
   );
 }

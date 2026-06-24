@@ -2,12 +2,11 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '../../../lib/supabase';
-import BlogCursor from '../../../components/BlogCursor';
 
 export const revalidate = 3600;
 export const dynamicParams = true; // Forces lookup of fresh items to eliminate caching 404 errors
 
-// 1. Dynamic Route Segments Engine
+// 1. DYNAMIC ROUTE SEGMENTS ENGINE
 export async function generateStaticParams() {
   const { data: posts } = await supabase
     .from('blogs')
@@ -17,7 +16,7 @@ export async function generateStaticParams() {
   return posts?.map((post) => ({ slug: post.slug })) || [];
 }
 
-// 2. High-Authority Server Meta Builder
+// 2. HIGH-AUTHORITY SERVER META BUILDER
 export async function generateMetadata({ params }) {
   const { slug } = params;
   const { data: post } = await supabase
@@ -49,10 +48,11 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// 3. Main Blog Page Component Rendering
+// 3. MAIN BLOG PAGE COMPONENT RENDERING
 export default async function BlogPostPage({ params }) {
   const { slug } = params;
 
+  // Fetch the primary article first to confirm existence
   const { data: post } = await supabase
     .from('blogs')
     .select(`
@@ -66,11 +66,9 @@ export default async function BlogPostPage({ params }) {
 
   if (!post) notFound();
 
-  // Trigger dynamic data logging safely
-  await supabase.rpc('increment_blog_views', { post_slug: slug });
-
-  // Query related internal articles
-  const { data: related } = await supabase
+  // ─── PARALLEL PERFORMANCE PIPELINE ───
+  // Executes background view logging and related post discovery together instantly
+  const relatedPromise = supabase
     .from('blogs')
     .select('id, title, slug, featured_image, featured_image_width, featured_image_height, alt_text, published_at')
     .eq('category_id', post.category_id)
@@ -78,7 +76,13 @@ export default async function BlogPostPage({ params }) {
     .eq('status', 'published')
     .limit(3);
 
-  // Parse structural header components to extract a complete Table of Contents array
+  const viewIncrementPromise = supabase.rpc('increment_blog_views', { post_slug: slug });
+
+  // Resolve background queries simultaneously to prevent waterfall page hang
+  const [relatedResult] = await Promise.all([relatedPromise, viewIncrementPromise]);
+  const related = relatedResult.data || [];
+
+  // Parse structural header components to extract Table of Contents links
   const headingMatches = [...post.content.matchAll(/<h[23][^>]*>(.*?)<\/h[23]>/g)];
   const tableOfContents = headingMatches.map((match) => {
     const text = match[1].replace(/<[^>]*>/g, '');
@@ -113,39 +117,38 @@ export default async function BlogPostPage({ params }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       
-      {/* Site-wide interactive premium pointer ring engine */}
-      <BlogCursor />
-      
-      <div className="min-h-screen bg-[#05030a] text-[var(--text-main)] pt-32 pb-24">
+      <div className="min-h-screen bg-[#05030a] text-[var(--text-main)] pt-32 pb-24 font-sans selection:bg-[var(--accent)] selection:text-white">
         <div className="container max-w-[1100px]">
           
           <nav className="text-xs text-[var(--text-muted)] mb-6 flex items-center gap-2" aria-label="Breadcrumb">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
-            <i className="fas fa-chevron-right text-[10px]"></i>
+            <i className="fas fa-chevron-right text-[10px] opacity-40"></i>
             <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <i className="fas fa-chevron-right text-[10px]"></i>
+            <i className="fas fa-chevron-right text-[10px] opacity-40"></i>
             <span className="text-white font-medium truncate max-w-[250px] md:max-w-none">{post.title}</span>
           </nav>
 
           <article>
-            <header className="mb-10 text-left">
+            <header className="mb-10 text-left space-y-3">
               {post.categories && (
-                <span className="text-xs font-bold text-[var(--accent-soft)] uppercase tracking-wider block mb-3">
+                <span className="text-xs font-bold text-[var(--accent-soft)] uppercase tracking-wider block font-mono">
                   {post.categories.name}
                 </span>
               )}
-              <h1 className="text-3xl md:text-5xl font-bold font-anokha leading-tight mb-6 text-white">{post.title}</h1>
+              <h1 className="text-2xl md:text-5xl font-bold font-anokha leading-tight text-white tracking-tight">
+                {post.title}
+              </h1>
               
-              <div className="flex flex-wrap items-center gap-4 md:gap-6 text-xs text-[var(--text-muted)] border-b border-white/10 pb-6">
+              <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--text-muted)] pt-2 border-b border-white/5 pb-4 font-mono">
                 <span>By {post.author_name}</span>
-                <span>•</span>
+                <span className="opacity-30">|</span>
                 <span>{new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                <span>•</span>
+                <span className="opacity-30">|</span>
                 <span>{post.reading_time} Min Read</span>
               </div>
             </header>
 
-            <div className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden mb-12 border border-white/10 shadow-2xl">
+            <div className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden mb-12 border border-white/5 shadow-2xl bg-neutral-900">
               <Image
                 src={post.featured_image}
                 alt={post.alt_text || post.title}
@@ -157,13 +160,14 @@ export default async function BlogPostPage({ params }) {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+              
               {tableOfContents.length > 0 && (
-                <aside className="lg:col-span-4 lg:sticky lg:top-28 p-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl hidden lg:block">
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-4 border-b border-white/10 pb-2">Table of Contents</h4>
-                  <ul className="space-y-3 text-xs">
+                <aside className="lg:col-span-4 lg:sticky lg:top-28 p-5 bg-[#07040f]/60 border border-white/5 rounded-2xl hidden lg:block text-left space-y-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-white border-b border-white/5 pb-2 font-mono">Table of Contents</h4>
+                  <ul className="space-y-2.5 text-xs text-[var(--text-muted)] font-light">
                     {tableOfContents.map((item, idx) => (
-                      <li key={idx} style={{ paddingLeft: item.level === '3' ? '16px' : '0px' }}>
-                        <a href={`#${item.id}`} className="text-[var(--text-muted)] hover:text-[var(--accent-soft)] transition-colors block leading-relaxed">
+                      <li key={idx} style={{ paddingLeft: item.level === '3' ? '12px' : '0px' }}>
+                        <a href={`#${item.id}`} className="hover:text-[var(--accent-soft)] transition-colors block leading-relaxed">
                           {item.text}
                         </a>
                       </li>
@@ -173,24 +177,23 @@ export default async function BlogPostPage({ params }) {
               )}
 
               <section 
-                className={`lg:col-span-${tableOfContents.length > 0 ? '8' : '12'} prose prose-invert max-w-none text-sm md:text-base leading-relaxed text-[var(--secondary)] space-y-6 text-left`}
+                className={`lg:col-span-${tableOfContents.length > 0 ? '8' : '12'} blog-rich-surface max-w-none text-sm md:text-base leading-relaxed text-[var(--secondary)] text-left`}
                 dangerouslySetInnerHTML={{ __html: processedContent }}
               />
             </div>
           </article>
 
-          {/* FIX: Related Articles Section RESTORED and OPTIMIZED */}
-          {related && related.length > 0 && (
-            <div className="mt-20 border-t border-white/10 pt-12 text-left">
-              <h3 className="text-xl md:text-2xl font-bold mb-8 text-white font-anokha">Related Articles</h3>
+          {/* Related Articles Layer */}
+          {related.length > 0 && (
+            <div className="mt-20 border-t border-white/5 pt-12 text-left space-y-8">
+              <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">Related Articles</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {related.map((rel, i) => (
                   <Link 
                     href={`/blog/${rel.slug}`} 
                     key={rel.id} 
-                    className="block p-4 group rounded-xl bg-white/[0.02] border border-white/5 hover:border-[var(--accent-soft)] transition-all duration-300 hover:-translate-y-1.5 shadow-lg relative overflow-hidden"
+                    className="block p-4 group rounded-xl bg-white/[0.01] border border-white/5 hover:border-[var(--accent-soft)]/20 transition-all duration-300 hover:-translate-y-1 shadow-lg relative overflow-hidden"
                     style={{
-                      // Premium fade-up delay compiled without browser observer script requirements
                       animation: 'fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
                       animationDelay: `${0.1 * (i + 1)}s`
                     }}
@@ -201,10 +204,10 @@ export default async function BlogPostPage({ params }) {
                         alt={rel.alt_text || rel.title} 
                         width={rel.featured_image_width || 1200} 
                         height={rel.featured_image_height || 630} 
-                        className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-105" 
+                        className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-[1.02]" 
                       />
                     </div>
-                    <h4 className="text-sm font-bold text-white group-hover:text-[var(--accent-soft)] transition-colors line-clamp-2 leading-snug">
+                    <h4 className="text-sm font-bold text-white group-hover:text-[var(--accent-soft)] transition-colors line-clamp-2 leading-snug tracking-tight">
                       {rel.title}
                     </h4>
                   </Link>
