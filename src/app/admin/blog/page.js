@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 
 export default function NextGenProductionAdminBlog() {
+  const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -11,6 +13,7 @@ export default function NextGenProductionAdminBlog() {
   const [uploadStatus, setUploadStatus] = useState('');
   const [seoScore, setSeoScore] = useState(0);
   const [seoWarnings, setSeoWarnings] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // Inline Metadata Creation States
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -28,51 +31,19 @@ export default function NextGenProductionAdminBlog() {
     categoryId: '', status: 'draft', featuredImage: '', imgWidth: 0, imgHeight: 0
   });
 
-  // 1. DYNAMIC MOUSE-TRACKING ACCENT GLOW & POINTER INSTANTIATION
+  // 🔐 1. SECURE AUTHENTICATION INITIALIZATION LAYER GUARD
   useEffect(() => {
-    const dot = document.getElementById('cursor-dot');
-    const ring = document.getElementById('cursor-ring');
-    if (!dot || !ring) return;
-
-    let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
-
-    const onMouseMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      dot.style.left = `${mouseX}px`;
-      dot.style.top = `${mouseY}px`;
+    const verifySession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.replace('/login');
+      } else {
+        setIsAuthenticated(true);
+        refreshAdminDashboardLog();
+      }
     };
-
-    const tick = () => {
-      ringX += (mouseX - ringX) * 0.12;
-      ringY += (mouseY - ringY) * 0.12;
-      ring.style.left = `${ringX}px`;
-      ring.style.top = `${ringY}px`;
-      requestAnimationFrame(tick);
-    };
-
-    const onMouseEnterLink = () => ring.classList.add('cursor-hovered');
-    const onMouseLeaveLink = () => ring.classList.remove('cursor-hovered');
-
-    window.addEventListener('mousemove', onMouseMove);
-    const animId = requestAnimationFrame(tick);
-
-    const refreshHoverBindings = () => {
-      document.querySelectorAll('a, button, .service-card, .btn, .action-row-btn, .meta-inline-btn').forEach(item => {
-        item.removeEventListener('mouseenter', onMouseEnterLink);
-        item.removeEventListener('mouseleave', onMouseLeaveLink);
-        item.addEventListener('mouseenter', onMouseEnterLink);
-        item.addEventListener('mouseleave', onMouseLeaveLink);
-      });
-    };
-    
-    refreshHoverBindings();
-
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      cancelAnimationFrame(animId);
-    };
-  }, [categories, availableTags, selectedTags, seoWarnings, adminPosts]);
+    verifySession();
+  }, [router]);
 
   // 2. DYNAMIC SYSTEM SEED LOADER & MANAGEMENT LOG LISTER
   const refreshAdminDashboardLog = async () => {
@@ -86,12 +57,9 @@ export default function NextGenProductionAdminBlog() {
     if (blogRes.data) setAdminPosts(blogRes.data);
   };
 
-  useEffect(() => {
-    refreshAdminDashboardLog();
-  }, []);
-
   // 3. RUN REAL-TIME SEO CRADLE SCORING ALGORITHM
   useEffect(() => {
+    if (!isAuthenticated) return;
     let score = 0;
     let warnings = [];
 
@@ -123,7 +91,7 @@ export default function NextGenProductionAdminBlog() {
 
     setSeoScore(score);
     setSeoWarnings(warnings);
-  }, [formData.title, formData.metaTitle, formData.metaDescription, formData.focusKeyword, formData.altText, formData.content]);
+  }, [formData.title, formData.metaTitle, formData.metaDescription, formData.focusKeyword, formData.altText, formData.content, isAuthenticated]);
 
   // 🛠️ INLINE MASTER CATEGORY INJECTION ENGINE
   const handleCreateCategory = async (e) => {
@@ -461,22 +429,30 @@ export default function NextGenProductionAdminBlog() {
     }
   };
 
-  return (
-    <>
-      <div id="cursor-dot" className="custom-cursor-dot" />
-      <div id="cursor-ring" className="custom-cursor-ring" />
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#05030a] flex items-center justify-center font-mono text-xs text-neutral-500 tracking-widest">
+        VERIFYING AUTH GATE ENCRYPTION MATRIX...
+      </div>
+    );
+  }
 
-      <div className="min-h-screen bg-[#05030a] text-[var(--text-main)] pt-24 pb-12 px-4 md:px-8">
-        <div className="w-full max-w-[1700px] mx-auto space-y-12">
+  return (
+    <div className="min-h-screen bg-[#05030a] text-[var(--text-main)] pt-24 pb-12 px-4 md:px-8 selection:bg-[var(--accent)] selection:text-white">
+      <div className="w-full max-w-[1700px] mx-auto space-y-12">
+        
+        <div className="border-b border-white/5 pb-4 flex flex-wrap justify-between items-center gap-4 text-left">
+          <div>
+            <span className="section-tag font-mono text-[10px]">Internal Content CMS Control Desk</span>
+            <h1 className="text-3xl md:text-4xl font-bold font-anokha gradient-text uppercase">
+              {editingPostId ? 'Modify Strategy Document Mode' : 'EnMate Authority Content Composer'}
+            </h1>
+          </div>
           
-          <div className="border-b border-white/5 pb-4 flex flex-wrap justify-between items-center gap-4">
-            <div>
-              <span className="section-tag">Internal Content CMS Control Desk</span>
-              <h1 className="text-3xl md:text-4xl font-bold font-anokha gradient-text">
-                {editingPostId ? 'Modify Strategy Document Mode' : 'EnMate Authority Content Composer'}
-              </h1>
-            </div>
-            
+          <div className="flex items-center gap-4 flex-wrap">
+            <button onClick={() => router.push('/admin')} className="btn px-4 py-2 bg-white/5 border border-white/10 hover:border-white/20 rounded-xl text-xs font-bold font-mono tracking-wide transition-all">
+              ← Main Terminal
+            </button>
             <div className="bg-[#0e0a1a] border border-white/10 rounded-2xl p-4 flex items-center gap-4 shadow-lg min-w-[240px]">
               <div className="relative flex items-center justify-center">
                 <svg className="w-16 h-16 transform -rotate-90">
@@ -486,7 +462,7 @@ export default function NextGenProductionAdminBlog() {
                 </svg>
                 <span className="absolute font-mono text-sm font-bold text-white">{seoScore}</span>
               </div>
-              <div className="text-left">
+              <div>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-muted)] block">Real-time SEO Matrix</span>
                 <span className={`text-xs font-bold ${seoScore >= 80 ? 'text-green-400' : seoScore >= 50 ? 'text-amber-400' : 'text-red-400'}`}>
                   {seoScore >= 80 ? 'Production Ready' : seoScore >= 50 ? 'Needs Tweaking' : 'Optimization Required'}
@@ -494,305 +470,303 @@ export default function NextGenProductionAdminBlog() {
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+          
+          {/* LEFT FORM FIELD CONFIGURATIONS */}
+          <div className="xl:col-span-7 space-y-6">
             
-            {/* LEFT FORM FIELD CONFIGURATIONS */}
-            <div className="xl:col-span-7 space-y-6">
-              
-              {/* ─── NEW FEATURE: METADATA QUICK CREATION LAYER PANEL ─── */}
-              <div className="bg-[#0b0816]/90 border border-white/5 rounded-3xl p-5 grid grid-cols-1 md:grid-cols-2 gap-6 shadow-md text-left">
-                {/* Inline Category Creator */}
-                <form onSubmit={handleCreateCategory} className="space-y-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--accent-soft)]">Create Fresh Master Category</label>
-                  <div className="flex gap-2">
-                    <input type="text" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} disabled={isCreatingMeta} className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., Performance Automation" required />
-                    <button type="submit" disabled={isCreatingMeta} className="meta-inline-btn px-4 py-2 bg-white/5 border border-white/10 hover:border-[var(--accent-soft)] rounded-xl text-xs font-bold text-white whitespace-nowrap transition-all">
-                      + Add Cat
-                    </button>
-                  </div>
-                </form>
-
-                {/* Inline Tag Creator */}
-                <form onSubmit={handleCreateTag} className="space-y-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--accent-soft)]">Create Fresh Structural Tag</label>
-                  <div className="flex gap-2">
-                    <input type="text" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} disabled={isCreatingMeta} className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., LeadGen" required />
-                    <button type="submit" disabled={isCreatingMeta} className="meta-inline-btn px-4 py-2 bg-white/5 border border-white/10 hover:border-[var(--accent-soft)] rounded-xl text-xs font-bold text-white whitespace-nowrap transition-all">
-                      + Add Tag
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              {/* MAIN CONTENT COMPOSER FRAME */}
-              <form onSubmit={handleSubmit} className="bg-[#07040f]/80 border border-white/5 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-xl text-left">
-                
-                {seoWarnings.length > 0 && (
-                  <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl space-y-1">
-                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block">⚠️ Search Engine Compliance Optimization Tips:</span>
-                    <ul className="list-disc pl-5 space-y-1 text-[11px] text-amber-200/70 font-light">
-                      {seoWarnings.slice(0, 3).map((warn, i) => <li key={i}>{warn}</li>)}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Content Master Title</label>
-                    <input type="text" value={formData.title} onChange={handleTitleChange} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., Tactical Local SEO Implementation Blueprints" required />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Target URL Slug Address Prefix</label>
-                    <input type="text" value={formData.slug} className="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-3 text-sm text-neutral-400 font-mono outline-none cursor-not-allowed" placeholder="auto-generated-slug-path" readOnly />
-                  </div>
+            {/* METADATA QUICK CREATION LAYER PANEL */}
+            <div className="bg-[#0b0816]/90 border border-white/5 rounded-3xl p-5 grid grid-cols-1 md:grid-cols-2 gap-6 shadow-md text-left">
+              <form onSubmit={handleCreateCategory} className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--accent-soft)]">Create Fresh Master Category</label>
+                <div className="flex gap-2">
+                  <input type="text" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} disabled={isCreatingMeta} className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., Performance Automation" required />
+                  <button type="submit" disabled={isCreatingMeta} className="btn px-4 py-2 bg-white/5 border border-white/10 hover:border-[var(--accent-soft)] rounded-xl text-xs font-bold text-white whitespace-nowrap transition-all">
+                    + Add Cat
+                  </button>
                 </div>
+              </form>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Assign Core Category Hub</label>
-                    <select value={formData.categoryId} onChange={(e) => setFormData(p => ({ ...p, categoryId: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required>
-                      <option value="">-- Choose Vertical Area Hub --</option>
-                      {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Target Strategy Focus Keyword</label>
-                    <input type="text" value={formData.focusKeyword} onChange={(e) => setFormData(p => ({ ...p, focusKeyword: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., SEO Tips Kottakkal" required />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Map Relational Structural Tags Index</label>
-                  <div className="flex flex-wrap gap-2 bg-black/20 p-3 rounded-2xl border border-white/5">
-                    {availableTags.map(tag => {
-                      const isActive = selectedTags.includes(tag.id);
-                      return (
-                        <button type="button" key={tag.id} onClick={() => toggleTagSelection(tag.id)} className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-[var(--accent)] text-white border border-[var(--accent-soft)] shadow-md' : 'bg-white/5 text-neutral-400 border border-white/5 hover:border-white/10'}`}>
-                          {isActive ? `✓ ${tag.name}` : `+ ${tag.name}`}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="p-5 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3">Featured Landing Image (Mandatory: Strict WebP format | Min: 1200×630px)</label>
-                  <div className="flex flex-col sm:flex-row items-center gap-4">
-                    <input type="file" accept=".webp" onChange={handleImageUpload} className="text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent)] file:text-white" />
-                    {uploadStatus && <span className="text-xs text-[var(--accent-soft)] font-medium font-mono">{uploadStatus}</span>}
-                  </div>
-                  
-                  {formData.featuredImage && (
-                    <div className="mt-4 p-2 bg-black/40 border border-white/10 rounded-xl max-w-sm">
-                      <span className="text-[9px] uppercase font-bold tracking-wider text-green-400 mb-2 block">✓ Active Upload Source Asset Preview ({formData.imgWidth}×{formData.imgHeight}px)</span>
-                      <img src={formData.featuredImage} alt="Live active input preview asset node instance source tracking" className="w-full aspect-[21/9] object-cover rounded-lg border border-white/5 shadow-inner" />
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Media Alt Validation Text</label>
-                  <input type="text" value={formData.altText} onChange={(e) => setFormData(p => ({ ...p, altText: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="Provide accurate alternate descriptive parameters..." required />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                      <span>Meta Title Index</span>
-                      <span className={formData.metaTitle.length >= 50 && formData.metaTitle.length <= 60 ? 'text-green-400' : 'text-amber-400'}>{formData.metaTitle.length}/60</span>
-                    </label>
-                    <input type="text" value={formData.metaTitle} onChange={(e) => setFormData(p => ({ ...p, metaTitle: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required />
-                  </div>
-
-                  <div>
-                    <label className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                      <span>Meta Description Index</span>
-                      <span className={formData.metaDescription.length >= 130 && formData.metaDescription.length <= 160 ? 'text-green-400' : 'text-amber-400'}>{formData.metaDescription.length}/160</span>
-                    </label>
-                    <input type="text" value={formData.metaDescription} onChange={(e) => setFormData(p => ({ ...p, metaDescription: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Article Brief Excerpt Summary</label>
-                  <textarea value={formData.excerpt} onChange={(e) => setFormData(p => ({ ...p, excerpt: e.target.value }))} rows={2} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none resize-none" placeholder="Summary snippet for main listings card layout blocks..." required />
-                </div>
-
-                <div className="flex flex-col border border-white/10 rounded-2xl overflow-hidden bg-black/20">
-                  <div className="editor-toolbar flex flex-wrap items-center gap-1 p-2 bg-neutral-900/90 border-b border-white/10">
-                    <button type="button" onClick={() => handleToolbarFormat('h2')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[H2]</button>
-                    <button type="button" onClick={() => handleToolbarFormat('h3')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[H3]</button>
-                    <button type="button" onClick={() => handleToolbarFormat('p')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[P]</button>
-                    <div className="w-px h-5 bg-white/10 mx-1"></div>
-                    <button type="button" onClick={() => { document.execCommand('bold'); }} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all"><i className="fas fa-bold"></i></button>
-                    <button type="button" onClick={() => { document.execCommand('italic'); }} className="px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs italic text-white transition-all"><i className="fas fa-italic"></i></button>
-                  </div>
-
-                  <div 
-                    ref={editorRef}
-                    contentEditable={true}
-                    onInput={() => setFormData(prev => ({ ...prev, content: editorRef.current.innerHTML }))}
-                    className="w-full min-h-[350px] max-h-[600px] overflow-y-auto p-4 bg-black/40 text-sm text-neutral-200 outline-none focus:ring-1 focus:ring-[var(--accent-soft)] blog-rich-surface font-sans leading-relaxed text-left"
-                    placeholder="Type natively. Highlight text streams to bind top styles matrix anchors smoothly..."
-                    style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/5">
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
-                      <input type="radio" name="status" value="draft" checked={formData.status === 'draft'} onChange={() => setFormData(p => ({ ...p, status: 'draft' }))} className="accent-[var(--accent)]" /> Keep Draft
-                    </label>
-                    <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
-                      <input type="radio" name="status" value="published" checked={formData.status === 'published'} onChange={() => setFormData(p => ({ ...p, status: 'published' }))} className="accent-[var(--accent)]" /> Publish Live
-                    </label>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {editingPostId && (
-                      <button type="button" onClick={() => {
-                        setEditingPostId(null);
-                        if (editorRef.current) editorRef.current.innerHTML = '';
-                        setSelectedTags([]);
-                        setFormData({
-                          title: '', slug: '', excerpt: '', content: '', focusKeyword: '',
-                          metaTitle: '', metaDescription: '', altText: '', authorName: 'EnMate Team',
-                          categoryId: '', status: 'draft', featuredImage: '', imgWidth: 0, imgHeight: 0
-                        });
-                      }} className="btn btn-outline text-xs uppercase tracking-wider font-bold px-5 py-3">
-                        Cancel Edit
-                      </button>
-                    )}
-                    <button type="submit" disabled={isSubmitting} className="btn btn-primary text-xs uppercase tracking-wider font-bold px-8 py-3 disabled:opacity-50">
-                      {isSubmitting ? 'Syncing Tables...' : editingPostId ? 'Apply Update Record' : 'Execute Data Injection'}
-                    </button>
-                  </div>
+              <form onSubmit={handleCreateTag} className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--accent-soft)]">Create Fresh Structural Tag</label>
+                <div className="flex gap-2">
+                  <input type="text" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} disabled={isCreatingMeta} className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., LeadGen" required />
+                  <button type="submit" disabled={isCreatingMeta} className="btn px-4 py-2 bg-white/5 border border-white/10 hover:border-[var(--accent-soft)] rounded-xl text-xs font-bold text-white whitespace-nowrap transition-all">
+                    + Add Tag
+                  </button>
                 </div>
               </form>
             </div>
 
-            {/* RIGHT COLUMN: CANVAS PREVIEW RENDERING */}
-            <aside className="xl:col-span-5 bg-[#040208]/90 border border-white/5 rounded-3xl p-6 lg:p-8 lg:sticky lg:top-24 h-auto max-h-[85vh] overflow-y-auto shadow-2xl text-left hidden xl:block">
-              <span className="text-[10px] font-bold text-[var(--accent-soft)] uppercase tracking-widest block mb-4 border-b border-white/5 pb-2">✨ Live Workspace Canvas Preview Rendering</span>
+            {/* MAIN CONTENT COMPOSER FRAME */}
+            <form onSubmit={handleSubmit} className="bg-[#07040f]/80 border border-white/5 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-xl text-left">
               
-              {formData.title ? (
-                <article className="space-y-6">
-                  <div>
-                    <span className="text-[11px] font-bold bg-white/5 px-3 py-1 rounded-full text-[var(--accent-soft)] border border-white/5 uppercase tracking-wider">
-                      {categories.find(c => c.id === formData.categoryId)?.name || 'Unassigned Hub'}
-                    </span>
-                    <h1 className="text-2xl font-bold font-anokha mt-4 leading-tight text-white">{formData.title}</h1>
-                    
-                    {selectedTags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {selectedTags.map(id => (
-                          <span key={id} className="text-[9px] font-mono text-[var(--text-muted)] bg-white/5 border border-white/5 px-2 py-0.5 rounded-md">
-                            #{availableTags.find(t => t.id === id)?.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="text-[11px] text-neutral-400 font-mono mt-3">
-                      <span>By {formData.authorName}</span> • <span>{getReadingTime(formData.content)} min read optimization</span>
-                    </div>
-                  </div>
-
-                  {formData.featuredImage && (
-                    <div className="w-full aspect-[21/9] rounded-xl overflow-hidden border border-white/10 bg-neutral-900">
-                      <img src={formData.featuredImage} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-
-                  {formData.excerpt && (
-                    <div className="p-4 bg-white/[0.02] border-l-2 border-[var(--accent-soft)] rounded-r-xl text-xs text-neutral-300 italic leading-relaxed">
-                      {formData.excerpt}
-                    </div>
-                  )}
-
-                  <div 
-                    className="prose prose-invert max-w-none text-xs text-neutral-300 space-y-4 leading-relaxed font-light font-sans border-t border-white/5 pt-4 blog-rich-surface"
-                    dangerouslySetInnerHTML={{ __html: formData.content || '<p className="text-neutral-500 font-mono italic">[Body stream visualization text layers will compile dynamically here...]</p>' }}
-                  />
-                </article>
-              ) : (
-                <div className="h-48 flex flex-col items-center justify-center text-center text-neutral-500 font-mono text-xs">
-                  <i className="fas fa-file-signature text-2xl mb-2 text-neutral-600"></i>
-                  <span>Populate field items on the form configuration arrays to compile live preview data sets...</span>
+              {seoWarnings.length > 0 && (
+                <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl space-y-1">
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block">⚠️ Search Engine Compliance Optimization Tips:</span>
+                  <ul className="list-disc pl-5 space-y-1 text-[11px] text-amber-200/70 font-light">
+                    {seoWarnings.slice(0, 3).map((warn, i) => <li key={i}>{warn}</li>)}
+                  </ul>
                 </div>
               )}
-            </aside>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Content Master Title</label>
+                  <input type="text" value={formData.title} onChange={handleTitleChange} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., Tactical Local SEO Implementation Blueprints" required />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Target URL Slug Address Prefix</label>
+                  <input type="text" value={formData.slug} className="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-3 text-sm text-neutral-400 font-mono outline-none cursor-not-allowed" placeholder="auto-generated-slug-path" readOnly />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Assign Core Category Hub</label>
+                  <select value={formData.categoryId} onChange={(e) => setFormData(p => ({ ...p, categoryId: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required>
+                    <option value="">-- Choose Vertical Area Hub --</option>
+                    {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Target Strategy Focus Keyword</label>
+                  <input type="text" value={formData.focusKeyword} onChange={(e) => setFormData(p => ({ ...p, focusKeyword: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="e.g., SEO Tips Kottakkal" required />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">Map Relational Structural Tags Index</label>
+                <div className="flex flex-wrap gap-2 bg-black/20 p-3 rounded-2xl border border-white/5">
+                  {availableTags.map(tag => {
+                    const isActive = selectedTags.includes(tag.id);
+                    return (
+                      <button type="button" key={tag.id} onClick={() => toggleTagSelection(tag.id)} className={`btn px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-[var(--accent)] text-white border border-[var(--accent-soft)] shadow-md' : 'bg-white/5 text-neutral-400 border border-white/5 hover:border-white/10'}`}>
+                        {isActive ? `✓ ${tag.name}` : `+ ${tag.name}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="p-5 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3">Featured Landing Image (Mandatory: Strict WebP format | Min: 1200×630px)</label>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <input type="file" accept=".webp" onChange={handleImageUpload} className="text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent)] file:text-white" />
+                  {uploadStatus && <span className="text-xs text-[var(--accent-soft)] font-medium font-mono">{uploadStatus}</span>}
+                </div>
+                
+                {formData.featuredImage && (
+                  <div className="mt-4 p-2 bg-black/40 border border-white/10 rounded-xl max-w-sm">
+                    <span className="text-[9px] uppercase font-bold tracking-wider text-green-400 mb-2 block">✓ Active Upload Source Asset Preview ({formData.imgWidth}×{formData.imgHeight}px)</span>
+                    <img src={formData.featuredImage} alt="Live active input preview asset node instance source tracking" className="w-full aspect-[21/9] object-cover rounded-lg border border-white/5 shadow-inner" />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Media Alt Validation Text</label>
+                <input type="text" value={formData.altText} onChange={(e) => setFormData(p => ({ ...p, altText: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" placeholder="Provide accurate alternate descriptive parameters..." required />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                    <span>Meta Title Index</span>
+                    <span className={formData.metaTitle.length >= 50 && formData.metaTitle.length <= 60 ? 'text-green-400' : 'text-amber-400'}>{formData.metaTitle.length}/60</span>
+                  </label>
+                  <input type="text" value={formData.metaTitle} onChange={(e) => setFormData(p => ({ ...p, metaTitle: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required />
+                </div>
+
+                <div>
+                  <label className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                    <span>Meta Description Index</span>
+                    <span className={formData.metaDescription.length >= 130 && formData.metaDescription.length <= 160 ? 'text-green-400' : 'text-amber-400'}>{formData.metaDescription.length}/160</span>
+                  </label>
+                  <input type="text" value={formData.metaDescription} onChange={(e) => setFormData(p => ({ ...p, metaDescription: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none" required />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Article Brief Excerpt Summary</label>
+                <textarea value={formData.excerpt} onChange={(e) => setFormData(p => ({ ...p, excerpt: e.target.value }))} rows={2} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[var(--accent-soft)] outline-none resize-none" placeholder="Summary snippet for main listings card layout blocks..." required />
+              </div>
+
+              <div className="flex flex-col border border-white/10 rounded-2xl overflow-hidden bg-black/20">
+                <div className="editor-toolbar flex flex-wrap items-center gap-1 p-2 bg-neutral-900/90 border-b border-white/10">
+                  <button type="button" onClick={() => handleToolbarFormat('h2')} className="btn px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[H2]</button>
+                  <button type="button" onClick={() => handleToolbarFormat('h3')} className="btn px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[H3]</button>
+                  <button type="button" onClick={() => handleToolbarFormat('p')} className="btn px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all">[P]</button>
+                  <div className="w-px h-5 bg-white/10 mx-1"></div>
+                  <button type="button" onClick={() => { document.execCommand('bold'); }} className="btn px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs font-bold text-white transition-all"><i className="fas fa-bold"></i></button>
+                  <button type="button" onClick={() => { document.execCommand('italic'); }} className="btn px-3 py-1.5 rounded bg-white/5 hover:bg-[var(--accent)] text-xs italic text-white transition-all"><i className="fas fa-italic"></i></button>
+                </div>
+
+                <div 
+                  ref={editorRef}
+                  contentEditable={true}
+                  onInput={() => setFormData(prev => ({ ...prev, content: editorRef.current.innerHTML }))}
+                  className="w-full min-h-[350px] max-h-[600px] overflow-y-auto p-4 bg-black/40 text-sm text-neutral-200 outline-none focus:ring-1 focus:ring-[var(--accent-soft)] blog-rich-surface font-sans leading-relaxed"
+                  placeholder="Type natively. Highlight text streams to bind top styles matrix anchors smoothly..."
+                  style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/5">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
+                    <input type="radio" name="status" value="draft" checked={formData.status === 'draft'} onChange={() => setFormData(p => ({ ...p, status: 'draft' }))} className="accent-[var(--accent)]" /> Keep Draft
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
+                    <input type="radio" name="status" value="published" checked={formData.status === 'published'} onChange={() => setFormData(p => ({ ...p, status: 'published' }))} className="accent-[var(--accent)]" /> Publish Live
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {editingPostId && (
+                    <button type="button" onClick={() => {
+                      setEditingPostId(null);
+                      if (editorRef.current) editorRef.current.innerHTML = '';
+                      setSelectedTags([]);
+                      setFormData({
+                        title: '', slug: '', excerpt: '', content: '', focusKeyword: '',
+                        metaTitle: '', metaDescription: '', altText: '', authorName: 'EnMate Team',
+                        categoryId: '', status: 'draft', featuredImage: '', imgWidth: 0, imgHeight: 0
+                      });
+                    }} className="btn btn-outline text-xs uppercase tracking-wider font-bold px-5 py-3">
+                      Cancel Edit
+                    </button>
+                  )}
+                  <button type="submit" disabled={isSubmitting} className="btn btn-primary text-xs uppercase tracking-wider font-bold px-8 py-3 disabled:opacity-50">
+                    {isSubmitting ? 'Syncing Tables...' : editingPostId ? 'Apply Update Record' : 'Execute Data Injection'}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
 
-          {/* ACTIVE PUBLICATIONS REGISTRY REGISTERS */}
-          <section className="bg-[#07040f]/80 border border-white/5 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl text-left backdrop-blur-xl">
-            <div>
-              <span className="section-tag">Database Content Records</span>
-              <h2 className="text-xl md:text-2xl font-bold font-anokha text-white">Active Publications Registry</h2>
-            </div>
+          {/* RIGHT COLUMN: CANVAS PREVIEW RENDERING */}
+          <aside className="xl:col-span-5 bg-[#040208]/90 border border-white/5 rounded-3xl p-6 lg:p-8 lg:sticky lg:top-24 h-auto max-h-[85vh] overflow-y-auto shadow-2xl text-left hidden xl:block">
+            <span className="text-[10px] font-bold text-[var(--accent-soft)] uppercase tracking-widest block mb-4 border-b border-white/5 pb-2">✨ Live Workspace Canvas Preview Rendering</span>
+            
+            {formData.title ? (
+              <article className="space-y-6">
+                <div>
+                  <span className="text-[11px] font-bold bg-white/5 px-3 py-1 rounded-full text-[var(--accent-soft)] border border-white/5 uppercase tracking-wider">
+                    {categories.find(c => c.id === formData.categoryId)?.name || 'Unassigned Hub'}
+                  </span>
+                  <h1 className="text-2xl font-bold font-anokha mt-4 leading-tight text-white">{formData.title}</h1>
+                  
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {selectedTags.map(id => (
+                        <span key={id} className="text-[9px] font-mono text-[var(--text-muted)] bg-white/5 border border-white/5 px-2 py-0.5 rounded-md">
+                          #{availableTags.find(t => t.id === id)?.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="text-[11px] text-neutral-400 font-mono mt-3">
+                    <span>By {formData.authorName}</span> • <span>{getReadingTime(formData.content)} min read optimization</span>
+                  </div>
+                </div>
 
-            <div className="overflow-x-auto w-full border border-white/5 rounded-2xl bg-black/20">
-              <table className="w-full text-xs md:text-sm text-neutral-300">
-                <thead className="text-[10px] uppercase tracking-wider bg-neutral-900/50 text-[var(--text-muted)] font-bold border-b border-white/5">
+                {formData.featuredImage && (
+                  <div className="w-full aspect-[21/9] rounded-xl overflow-hidden border border-white/10 bg-neutral-900">
+                    <img src={formData.featuredImage} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+
+                {formData.excerpt && (
+                  <div className="p-4 bg-white/[0.02] border-l-2 border-[var(--accent-soft)] rounded-r-xl text-xs text-neutral-300 italic leading-relaxed">
+                    {formData.excerpt}
+                  </div>
+                )}
+
+                <div 
+                  className="prose prose-invert max-w-none text-xs text-neutral-300 space-y-4 leading-relaxed font-light font-sans border-t border-white/5 pt-4 blog-rich-surface"
+                  dangerouslySetInnerHTML={{ __html: formData.content || '<p className="text-neutral-500 font-mono italic">[Body stream visualization text layers will compile dynamically here...]</p>' }}
+                />
+              </article>
+            ) : (
+              <div className="h-48 flex flex-col items-center justify-center text-center text-neutral-500 font-mono text-xs">
+                <i className="fas fa-file-signature text-2xl mb-2 text-neutral-600"></i>
+                <span>Populate field items on the form configuration arrays to compile live preview data sets...</span>
+              </div>
+            )}
+          </aside>
+        </div>
+
+        {/* ACTIVE PUBLICATIONS REGISTRY REGISTERS */}
+        <section className="bg-[#07040f]/80 border border-white/5 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl text-left backdrop-blur-xl">
+          <div>
+            <span className="section-tag font-mono text-[10px]">Database Content Records</span>
+            <h2 className="text-xl md:text-2xl font-bold font-anokha text-white">Active Publications Registry</h2>
+          </div>
+
+          <div className="overflow-x-auto w-full border border-white/5 rounded-2xl bg-black/20">
+            <table className="w-full text-xs md:text-sm text-neutral-300">
+              <thead className="text-[10px] uppercase tracking-wider bg-neutral-900/50 text-[var(--text-muted)] font-bold border-b border-white/5">
+                <tr>
+                  <th scope="col" className="px-6 py-4">Article Title Context</th>
+                  <th scope="col" className="px-6 py-4">Assigned Category</th>
+                  <th scope="col" className="px-6 py-4">URL Slug Path</th>
+                  <th scope="col" className="px-6 py-4 text-center">Lifecycle Status</th>
+                  <th scope="col" className="px-6 py-4 text-right">Administrative Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 font-light">
+                {adminPosts.length === 0 ? (
                   <tr>
-                    <th scope="col" className="px-6 py-4">Article Title Context</th>
-                    <th scope="col" className="px-6 py-4">Assigned Category</th>
-                    <th scope="col" className="px-6 py-4">URL Slug Path</th>
-                    <th scope="col" className="px-6 py-4 text-center">Lifecycle Status</th>
-                    <th scope="col" className="px-6 py-4 text-right">Administrative Actions</th>
+                    <td colSpan="5" className="text-center py-8 font-mono text-xs text-neutral-500 italic">
+                      No articles detected inside database index rows.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5 font-light">
-                  {adminPosts.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="text-center py-8 font-mono text-xs text-neutral-500 italic">
-                        No articles detected inside database index rows.
+                ) : (
+                  adminPosts.map((post) => (
+                    <tr key={post.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="px-6 py-4 font-medium text-white max-w-sm truncate">{post.title}</td>
+                      <td className="px-6 py-4 text-[var(--text-muted)]">
+                        {categories.find(c => c.id === post.category_id)?.name || 'Unassigned'}
+                      </td>
+                      <td className="px-6 py-4 font-mono text-[11px] text-neutral-400">{post.slug}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${post.status === 'published' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                          {post.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button 
+                            type="button" 
+                            onClick={() => loadPostToWorkspace(post.id)}
+                            className="btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-[var(--accent)] hover:border-[var(--accent-soft)] transition-all font-medium text-[11px]"
+                          >
+                            Edit Profile
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => executeDataPurgeWorkflow(post)}
+                            className="btn px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all font-medium text-[11px]"
+                          >
+                            Purge Row
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ) : (
-                    adminPosts.map((post) => (
-                      <tr key={post.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="px-6 py-4 font-medium text-white max-w-sm truncate">{post.title}</td>
-                        <td className="px-6 py-4 text-[var(--text-muted)]">
-                          {categories.find(c => c.id === post.category_id)?.name || 'Unassigned'}
-                        </td>
-                        <td className="px-6 py-4 font-mono text-[11px] text-neutral-400">{post.slug}</td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${post.status === 'published' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                            {post.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button 
-                              type="button" 
-                              onClick={() => loadPostToWorkspace(post.id)}
-                              className="action-row-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-[var(--accent)] hover:border-[var(--accent-soft)] transition-all font-medium text-[11px]"
-                            >
-                              Edit Profile
-                            </button>
-                            <button 
-                              type="button" 
-                              onClick={() => executeDataPurgeWorkflow(post)}
-                              className="action-row-btn px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all font-medium text-[11px]"
-                            >
-                              Purge Row
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-        </div>
       </div>
-    </>
+    </div>
   );
 }
