@@ -206,7 +206,7 @@ export default function SecureAdminPortfolioManager() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Client Corporate Name</label>
-                <input type="text" value={formData.clientName} onChange={(e) => setFormData(p => ({ ...p, clientName: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--accent-soft)]" placeholder="e.g., Al-Maha Outfits" />
+                <input type="text" value={formData.clientName} onChange={(e) => setFormData(p => ({ ...p, clientName: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--accent-soft)]" placeholder="e.g., Skymit travels" />
               </div>
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Showcase Redirection Anchor Link (Optional)</label>

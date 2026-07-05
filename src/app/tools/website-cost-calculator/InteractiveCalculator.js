@@ -50,7 +50,7 @@ export default function InteractiveCalculator() {
   const triggerLeadWhatsAppRouter = () => {
     const dataReportString = `Hi EnMate, I just generated an application estimation blueprint:\n- Architecture Scope: ${businessType}\n- Pages Volume: ${pagesCount}\n- Integrations: ${[hasBlog && 'Blog Hub', hasSeo && 'Schema SEO', hasEcom && 'Cart Layer', hasBooking && 'Calendar Sync'].filter(Boolean).join(', ') || 'Core UI Only'}\n- Projected Cost Range: ₹${costMin.toLocaleString('en-IN')} - ₹${costMax.toLocaleString('en-IN')}\n- Timeline Range: ${timelineMin}-${timelineMax} Weeks.\n\nI want to book my free consultation proposal session.`;
     
-    window.open(`https://wa.me/918138881132?text=${encodeURIComponent(dataReportString)}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/918075186078?text=${encodeURIComponent(dataReportString)}`, '_blank', 'noopener,noreferrer');
   };
 
   return (

@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 
 export default function AboutPage() {
-  const whatsappUrl = "https://wa.me/918138881132?text=Hi%20👋,%20I%20read%20the%20EnMate%20organization%20profile.%20I%20want%20to%20partner%20with%20your%20team.";
+  const whatsappUrl = "https://wa.me/918075186078?text=Hi%20👋,%20I%20read%20the%20EnMate%20organization%20profile.%20I%20want%20to%20partner%20with%20your%20team.";
 
   // 1. LIGHTWEIGHT COORDINATES STREAM FOR SPOTLIGHT CARDS HOVER 
   useEffect(() => {
