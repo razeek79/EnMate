@@ -16,7 +16,7 @@ export default function SecureAdminPortfolioManager() {
 
   const [formData, setFormData] = useState({
     title: '', slug: '', description: '', clientName: '',
-    categoryId: '', projectUrl: '', thumbnailUrl: '',
+    categoryId: '', projectUrl: '', images: [],
     altText: '', isFeatured: false, imgWidth: 1200, imgHeight: 630
   });
 
@@ -66,61 +66,94 @@ export default function SecureAdminPortfolioManager() {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
-    setUploadStatus('Analyzing aspect tokens...');
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = async function () {
-        const width = this.width;
-        const height = this.height;
+    setUploadStatus(`Processing ${files.length} visual assets...`);
+    
+    try {
+      const uploadedUrls = [];
 
-        try {
-          const fileExt = file.name.split('.').pop();
-          const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-          const filePath = `showcase/${uniqueName}`;
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const filePath = `showcase/${uniqueName}`;
 
-          const { error: uploadError } = await supabase.storage
-            .from('portfolio-images')
-            .upload(filePath, file, { cacheControl: '3600', upsert: true });
+        const { error: uploadError } = await supabase.storage
+          .from('portfolio-images')
+          .upload(filePath, file, { cacheControl: '3600', upsert: true });
 
-          if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-          const { data: { publicUrl } } = supabase.storage.from('portfolio-images').getPublicUrl(filePath);
+        const { data: { publicUrl } } = supabase.storage.from('portfolio-images').getPublicUrl(filePath);
+        uploadedUrls.push(publicUrl);
+      }
 
-          setFormData(prev => ({ ...prev, thumbnailUrl: publicUrl, imgWidth: width, imgHeight: height }));
-          setUploadStatus('Asset verified and cryptographically signed.');
-        } catch (err) {
-          setUploadStatus('Upload failed. Check bucket public policies.');
-        }
-      };
-    };
+      setFormData(prev => ({ 
+        ...prev, 
+        images: [...prev.images, ...uploadedUrls],
+        imgWidth: 1200,
+        imgHeight: 630
+      }));
+      setUploadStatus('All assets verified and appended.');
+    } catch (err) {
+      setUploadStatus('Upload operation dropped.');
+      alert(err.message);
+    }
+  };
+
+  const removeImageFromStack = (indexToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, idx) => idx !== indexToRemove)
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.thumbnailUrl) return alert('Showroom layout canvas vector is required.');
-    setIsSubmitting(true);
+    if (formData.images.length === 0) return alert('At least one showroom layout asset is mandatory.');
+    setIsSubmitting(false);
 
-    const payload = {
-      title: formData.title,
-      slug: formData.slug,
-      description: formData.description,
-      client_name: formData.clientName || 'Premium Enterprise Portfolio Client',
-      category_id: formData.categoryId || null,
-      project_url: formData.projectUrl,
-      thumbnail_url: formData.thumbnailUrl,
-      alt_text: formData.altText,
-      is_featured: formData.isFeatured,
-      img_width: formData.imgWidth,
-      img_height: formData.imgHeight
-    };
-
+    let finalSlug = formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').trim();
+    
     try {
+      setIsSubmitting(true);
+      
+      // 🔥 FIX: Automated unique constraint collision mitigation bypass loop
+      let isUnique = false;
+      let counter = 0;
+      let currentCheckSlug = finalSlug;
+
+      while (!isUnique) {
+        currentCheckSlug = counter === 0 ? finalSlug : `${finalSlug}-${counter}`;
+        const { data: match } = await supabase
+          .from('portfolio')
+          .select('slug, id')
+          .eq('slug', currentCheckSlug)
+          .maybeSingle();
+
+        if (!match || match.id === editingId) {
+          isUnique = true;
+         finalSlug = currentCheckSlug;
+        } else {
+          counter++;
+        }
+      }
+
+      const payload = {
+        title: formData.title,
+        slug: finalSlug,
+        description: formData.description,
+        client_name: formData.clientName || 'Premium Enterprise Portfolio Client',
+        category_id: formData.categoryId || null,
+        project_url: formData.projectUrl,
+        images: formData.images, // Array stack mapping
+        alt_text: formData.altText || `${formData.title} premium profile matrix by EnMate`,
+        is_featured: formData.isFeatured,
+        img_width: formData.imgWidth,
+        img_height: formData.imgHeight
+      };
+
       const { error } = editingId 
         ? await supabase.from('portfolio').update(payload).eq('id', editingId)
         : await supabase.from('portfolio').insert([payload]);
@@ -129,7 +162,7 @@ export default function SecureAdminPortfolioManager() {
 
       alert(editingId ? 'Case record re-aligned safely.' : 'Portfolio timeline node appended live.');
       setEditingId(null);
-      setFormData({ title: '', slug: '', description: '', clientName: '', categoryId: '', projectUrl: '', thumbnailUrl: '', altText: '', isFeatured: false, imgWidth: 1200, imgHeight: 630 });
+      setFormData({ title: '', slug: '', description: '', clientName: '', categoryId: '', projectUrl: '', images: [], altText: '', isFeatured: false, imgWidth: 1200, imgHeight: 630 });
       loadDatabaseContext();
     } catch (err) {
       alert(`Transaction failure: ${err.message}`);
@@ -141,9 +174,11 @@ export default function SecureAdminPortfolioManager() {
   const handlePurge = async (item) => {
     if (!confirm(`Are you sure you want to permanently delete "${item.title}"?`)) return;
     try {
-      if (item.thumbnail_url) {
-        const path = item.thumbnail_url.split('/storage/v1/object/public/portfolio-images/')[1];
-        if (path) await supabase.storage.from('portfolio-images').remove([path]);
+      if (item.images && item.images.length > 0) {
+        for (const url of item.images) {
+          const path = url.split('/storage/v1/object/public/portfolio-images/')[1];
+          if (path) await supabase.storage.from('portfolio-images').remove([path]);
+        }
       }
       const { error } = await supabase.from('portfolio').delete().eq('id', item.id);
       if (error) throw error;
@@ -187,7 +222,6 @@ export default function SecureAdminPortfolioManager() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-          {/* Main Showcase Submission Form Structure */}
           <form onSubmit={handleSubmit} className="xl:col-span-7 bg-[#07040f]/80 border border-white/5 rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl backdrop-blur-md">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -209,24 +243,30 @@ export default function SecureAdminPortfolioManager() {
                 <input type="text" value={formData.clientName} onChange={(e) => setFormData(p => ({ ...p, clientName: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--accent-soft)]" placeholder="e.g., Skymit travels" />
               </div>
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Showcase Redirection Anchor Link (Optional)</label>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Showcase Redirection Link (Optional)</label>
                 <input type="url" value={formData.projectUrl} onChange={(e) => setFormData(p => ({ ...p, projectUrl: e.target.value }))} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--accent-soft)]" placeholder="https://www.clientwork.com" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Showcase Execution Breakdown & Narrative</label>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Showcase Narrative Description</label>
               <textarea value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} rows={4} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none resize-none focus:border-[var(--accent-soft)] leading-relaxed font-light" placeholder="Detail the brand strategy optimization loops..." required />
             </div>
 
-            <div className="p-5 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl">
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Showcase Graphic Canvas (Mandatory WebP format)</label>
-              <input type="file" accept=".webp" onChange={handleImageUpload} className="text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent)] file:text-white" />
-              {uploadStatus && <div className="text-xs font-mono text-[var(--accent-soft)] mt-2">{uploadStatus}</div>}
+            {/* MULTI IMAGE UPLOAD ARCHITECTURE GRID SECTION */}
+            <div className="p-5 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl space-y-4">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-400">Project Canvas Assets (Upload side-1, side-2, etc. simultaneously or sequentially)</label>
+              <input type="file" accept=".webp" multiple onChange={handleImageUpload} className="text-xs text-neutral-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent)] file:text-white" />
+              {uploadStatus && <div className="text-xs font-mono text-[var(--accent-soft)]">{uploadStatus}</div>}
               
-              {formData.thumbnailUrl && (
-                <div className="mt-4 max-w-xs p-2 bg-black/40 border border-white/10 rounded-xl">
-                  <img src={formData.thumbnailUrl} className="w-full aspect-video object-cover rounded-lg" alt="" />
+              {formData.images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  {formData.images.map((url, idx) => (
+                    <div key={idx} className="relative group aspect-video bg-black/40 rounded-xl overflow-hidden border border-white/10">
+                      <img src={url} className="w-full h-full object-cover" alt="" />
+                      <button type="button" onClick={() => removeImageFromStack(idx)} className="absolute top-1 right-1 w-5 h-5 bg-red-600 rounded-full flex items-center justify-center text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -241,21 +281,21 @@ export default function SecureAdminPortfolioManager() {
             </button>
           </form>
 
-          {/* Active Work Grid Records Sidebar */}
+          {/* Active Sidebar Listing */}
           <div className="xl:col-span-5 bg-[#040208]/90 border border-white/5 rounded-3xl p-6 space-y-4 shadow-2xl sticky top-24 max-h-[80vh] overflow-y-auto">
             <span className="text-xs font-mono text-[var(--accent-soft)] block border-b border-white/5 pb-2 uppercase tracking-widest">Active Showroom Records ({items.length})</span>
             <div className="space-y-3">
               {items.map(item => (
                 <div key={item.id} className="p-4 bg-white/[0.01] border border-white/5 rounded-2xl flex justify-between items-center gap-4 hover:border-white/10 transition-all">
                   <div className="flex items-center gap-3 truncate text-left">
-                    <img src={item.thumbnail_url} className="w-12 h-12 object-cover rounded-xl border border-white/10 shrink-0" alt="" />
+                    <img src={item.images?.[0] || item.thumbnail_url} className="w-12 h-12 object-cover rounded-xl border border-white/10 shrink-0" alt="" />
                     <div className="truncate space-y-1">
                       <h4 className="text-sm font-bold text-white truncate leading-tight">{item.title}</h4>
                       <span className="inline-block text-[9px] bg-white/5 px-2 py-0.5 rounded text-[var(--accent-soft)] border border-white/5 font-mono uppercase tracking-wide">{item.portfolio_categories?.name || 'Unassigned'}</span>
                     </div>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
-                    <button onClick={() => { setEditingId(item.id); setFormData({ title: item.title, slug: item.slug, description: item.description, clientName: item.client_name, categoryId: item.category_id || '', projectUrl: item.project_url || '', thumbnailUrl: item.thumbnail_url, altText: item.alt_text, isFeatured: item.is_featured, imgWidth: item.img_width, imgHeight: item.img_height }); }} className="btn px-2.5 py-1.5 bg-white/5 hover:bg-[var(--accent)] border border-white/10 rounded-lg text-[10px] text-white font-mono uppercase transition-all font-bold">Edit</button>
+                    <button onClick={() => { setEditingId(item.id); setFormData({ title: item.title, slug: item.slug, description: item.description, clientName: item.client_name, categoryId: item.category_id || '', projectUrl: item.project_url || '', images: item.images || [], altText: item.alt_text, isFeatured: item.is_featured, imgWidth: item.img_width, imgHeight: item.img_height }); }} className="btn px-2.5 py-1.5 bg-white/5 hover:bg-[var(--accent)] border border-white/10 rounded-lg text-[10px] text-white font-mono uppercase transition-all font-bold">Edit</button>
                     <button onClick={() => handlePurge(item)} className="btn px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500 hover:text-white rounded-lg text-[10px] text-red-400 font-mono uppercase transition-all font-bold">Purge</button>
                   </div>
                 </div>
