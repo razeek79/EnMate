@@ -22,6 +22,7 @@ export default function Navbar() {
             <li><Link href="/" onClick={() => setIsMenuOpen(false)}>Home</Link></li>
             <li><Link href="/services" onClick={() => setIsMenuOpen(false)}>Services</Link></li>
             <li><Link href="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link></li>
+            <li><Link href="/portfolio" onClick={() => setIsMenuOpen(false)}>Portfolio</Link></li>
             <li><Link href="/blog" onClick={() => setIsMenuOpen(false)}>Blog</Link></li>
             <li><Link href="/tools" onClick={() => setIsMenuOpen(false)}>Tools</Link></li>
             <li className="nav-cta-mobile flex justify-center mt-4">
