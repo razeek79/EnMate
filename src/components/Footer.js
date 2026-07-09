@@ -12,7 +12,7 @@ export default function Footer() {
           <p>EnMate – Premium performance growth structures and full-stack system software solutions serving clients locally and worldwide.</p>
           <p className="footer-global">Location: Kottakkal, Kerala, India 🇮🇳 | Globally Distributed 🌍</p>
           <p className="text-sm text-[var(--text-muted)] mt-2">
-            <i className="fas fa-envelope mr-2 text-[var(--accent-soft)]"></i> enmate.digital@gmail.com<br />
+            <i className="fas fa-envelope mr-2 text-[var(--accent-soft)]"></i> contact@enmate.in<br />
             <i className="fas fa-phone mr-2 text-[var(--accent-soft)]"></i> +91 81388 81132
           </p>
           <div className="footer-socials">
